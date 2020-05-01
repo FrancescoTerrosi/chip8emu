@@ -1,5 +1,4 @@
 #pragma once
-
 #ifndef CHIP8
 #define CHIP8
 
@@ -7,24 +6,22 @@
 #include <stdio.h>
 #include <string.h>
 
+inline const void __UNUSED__(void* args...)
+{
+    static_cast<void*>(args);
+}
+
 class Chip8
 {
 public:
 
-	unsigned short drawFlag;
-
-	Chip8() {
-
-	}
-
-	~Chip8() {
-		delete this;
-	}
+    Chip8();
+    ~Chip8();
 
 	void initialize();
-
     void emulateCycle();
 
+    unsigned short drawFlag;
     unsigned char chip8_fontset[80] =
     {
       0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -44,6 +41,18 @@ public:
       0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
       0xF0, 0x80, 0xF0, 0x80, 0x80  // F
     };
+
+    unsigned short opcode;          // 2 byte per le operazioni macchina
+    unsigned char memory[4096];		// 4k per la memoria
+    unsigned char V[16];            // 16 byte per i registri della CPU
+    unsigned short I;               //	Index Register
+    unsigned short pc;              // Program Counter
+    unsigned char gfx[64 * 32];     // Graphics
+    unsigned char delay_timer;
+    unsigned char sound_timer;
+    unsigned short stack[16];
+    unsigned short sp;
+
 };
 
 #endif

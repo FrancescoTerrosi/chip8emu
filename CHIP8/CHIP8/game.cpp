@@ -1,19 +1,19 @@
 #include "chip8.h"
 
-Chip8 myChip8;
+const Chip8 myChip8;
 
 int main(int argc, char** argv)
 {
+    __UNUSED__(&argc, &argv);
 	//setupGraphics();
 	//setupInput();
 
 	//myChip8.initialize();
 	//myChip8.loadGame("pong");
 
-	while (1)
+    while(true)
 	{
 		//emulate one cycle
-		
 		//myChip8.emulateCycle();
 
 		// if draw flag, update screen
@@ -23,9 +23,7 @@ int main(int argc, char** argv)
 		}
 
 		// store keys press state (press-release)
-
 		//myChip8.setKeys();
-
 	}
 
 	return 0;

@@ -1,21 +1,14 @@
 #include "chip8.h"
 
-unsigned short opcode;		// 2 byte per le operazioni macchina
+Chip8::Chip8()
+{
+    initialize();
+}
 
-unsigned char memory[4096];		// 4k per la memoria
-
-unsigned char V[16];		// 16 byte per i registri della CPU
-
-unsigned short I;			//	Index Register
-unsigned short pc;			// Program Counter
-
-unsigned char gfx[64 * 32];  // Graphics
-
-unsigned char delay_timer;
-unsigned char sound_timer;
-
-unsigned short stack[16];
-unsigned short sp;
+Chip8::~Chip8()
+{
+    delete this;
+}
 
 void Chip8::initialize()
 {
@@ -23,7 +16,6 @@ void Chip8::initialize()
 	opcode = 0;
 	I = 0;
 	sp = 0;
-
 	memset(memory, 0, 4096);
 	memset(V, 0, 16);
 	memset(gfx, 0, 64 * 32);
@@ -33,10 +25,6 @@ void Chip8::initialize()
 	{
 		memory[i] = chip8_fontset[i];
 	}
-
-
-
-	return;
 }
 
 void Chip8::emulateCycle()
