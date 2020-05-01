@@ -78,3 +78,4 @@ void Chip8::emulateCycle()
 		--sound_timer;
 	}
 }
+
