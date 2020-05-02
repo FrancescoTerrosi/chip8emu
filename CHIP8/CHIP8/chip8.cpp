@@ -34,7 +34,10 @@ void Chip8::initialize()
 		memory[i] = chip8_fontset[i];
 	}
 
+	// inizializzo a caso per ora poi capiremo
 
+	delay_timer = 60;
+	sound_timer = 60;
 
 	return;
 }
@@ -43,7 +46,7 @@ void Chip8::emulateCycle()
 {
 	// FETCH OPCODE
 
-	// Devo combinare memory[pc] e memory[pc+1] --> ne leggo uno, shifto di 1 byte e faccio l'or con l'altro bit
+	// Devo combinare memory[pc] e memory[pc+1] --> ne leggo uno, shifto di 1 byte e faccio l'or con l'altro byte
 
 	opcode = memory[pc] << 8 | memory[pc + 1];
 
@@ -53,14 +56,65 @@ void Chip8::emulateCycle()
 	{
 		// DECODE DEGLI OPCODE
 
+		// gestione 2 op che iniziano con 0x00
+		case 0x0000:
+			switch (opcode & 0xFF)
+			{
+				// clear screen
+				case 0x00E0:
+					pc += 2;
+					break;
+
+				// return from subroutine
+				case 0x00EE:
+
+					/*
+					VADO A BRACCIO:
+					*/
+
+					--sp;
+					pc = stack[sp];
+					break;
+				default:
+					printf("Unknown opcode 0x%X\n", opcode);
+					fflush(stdout);
+			}
+			break;
+
+
+		// 0x1NNN	goto NNN
+		case 0x1000:
+			pc = opcode & 0x0FFF;
+			break;
+
+		// 0x2NNN   calls subroutine at NNN
+		case 0x2000:
+			stack[sp] = pc;
+			++sp;
+			pc = opcode & 0x0FFF;
+			break;
+
+
+		// 0xANNN -->  set I to address NNN
 		case 0xA000:
-			// EXECUTE
 			I = opcode & 0x0FFF;
+			pc += 2;
+			break;
+		
+		// 0xBNNN -->  PC = V0 + NNN     jump to address V0+NNN
+		case 0xB000:
+			pc = V[0] + (opcode & 0x0FFF);
+			break;
+
+		// 0xCXNN -->  V[X] = rand() % NN         0 <= rand <= 255
+		case 0xC000:
+			V[opcode & 0xF00] = (opcode & 0xFF) & (rand() % 256);
 			pc += 2;
 			break;
 
 		default:
 			printf("Opcode Error!!\n Code: 0x%X\n", opcode);
+			fflush(stdout);
 
 	}
 
