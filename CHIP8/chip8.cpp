@@ -39,12 +39,18 @@ void Chip8::initialize()
 
 void Chip8::emulateCycle()
 {
+    if(pc > MEM_SIZE)
+    {
+        printf("%s\n", "Error: program counter out of memory");
+        return;
+    }
+
 	// FETCH OPCODE
-
 	// Devo combinare memory[pc] e memory[pc+1] --> ne leggo uno, shifto di 1 byte e faccio l'or con l'altro byte
-
 	opcode = memory[pc] << 8 | memory[pc + 1];
-
+    // Stampo opcode
+    printf("pc = %hu\tmem[%hu] = %hhu\tmem[%hu] = %hhu\topcode = %hu\n",
+                  pc,      pc, memory[pc], pc+1, memory[pc+1], opcode);
 	// DECODE OPCODE
 
 	switch (opcode & 0xF000)
@@ -57,6 +63,7 @@ void Chip8::emulateCycle()
 			{
 				// clear screen
 				case 0x00E0:
+                    printf("Instruction: %s\n", "Clear Screen");
 					pc += 2;
 					break;
 
@@ -78,6 +85,7 @@ void Chip8::emulateCycle()
 		// 0x1NNN	goto NNN
 		case 0x1000:
 			pc = opcode & 0x0FFF;
+            printf("Instruction: GOTO %hu\n", pc);
 			break;
 
 		// 0x2NNN   calls subroutine at NNN

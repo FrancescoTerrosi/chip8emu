@@ -6,6 +6,11 @@
 #include <stdio.h>
 #include <string.h>
 
+const auto MEM_SIZE = 4096;
+const auto N_REG =  16;
+const auto STACK_SIZE = 16;
+const auto GMEM_SIZE = 64 * 32;
+
 class Chip8
 {
 public:
@@ -35,15 +40,15 @@ public:
       0xF0, 0x80, 0xF0, 0x80, 0x80  // F
     };
 
-    unsigned short opcode;          // 2 byte per le operazioni macchina
-    unsigned char memory[4096];		// 4k per la memoria
-    unsigned char V[16];            // 16 byte per i registri della CPU
-    unsigned short stack[16];       // 16 byte per lo stack
-    unsigned char gfx[64 * 32];     // 64*32 byte per la memoria grafica
+    unsigned short opcode;              // 2 byte per le operazioni macchina
+    unsigned char memory[MEM_SIZE];     // 4k per la memoria
+    unsigned char V[N_REG];             // 16 byte per i registri della CPU
+    unsigned short stack[STACK_SIZE];   // 16 byte per lo stack
+    unsigned char gfx[GMEM_SIZE];       // 64*32 byte per la memoria grafica
 
-    unsigned short I;               // Index register
-    unsigned short pc;              // Program Counter
-    unsigned short sp;              // Stack pointer
+    unsigned short I;                   // Index register
+    unsigned short pc;                  // Program Counter
+    unsigned short sp;                  // Stack pointer
 
     unsigned char delay_timer;
     unsigned char sound_timer;
