@@ -5,3 +5,7 @@
 *build*
 *.opendb
 *.user
+*.log
+*.tlog
+*.idb
+*.pdb
