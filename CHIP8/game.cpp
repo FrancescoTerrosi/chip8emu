@@ -5,23 +5,23 @@
 #define SUBROUTINE_CALL(N)           (0x2000 | (N & 0x0FFF))
 #define SUBROUTINE_RETURN            0x00EE
 #define GOTO(N)                      (0x1000 | (N & 0x0FFF))
-#define SKIP_ON_REG_EQUAL_VAL(R,V)   (0x3000 | ((R & 0x0F00) | (V & 0x00FF)))
-#define SKIP_ON_REG_NOTEQ_VAL(R,V)   (0x4000 | ((R & 0x0F00) | (V & 0x00FF)))
-#define SKIP_ON_REG_EQUAL_REG(R1,R2) (0x5000 | ((R1 & 0x0F00) | (R2 & 0x00F0)))
+#define SKIP_ON_REG_EQUAL_VAL(R,V)   (0x3000 | R << 8 |  V)
+#define SKIP_ON_REG_NOTEQ_VAL(R,V)   (0x4000 | R << 8 |  V)
+#define SKIP_ON_REG_EQUAL_REG(R1,R2) (0x5000 | ((R1 << 8) | (R2 & 0x00F0)))
 #define SET_REGISTER_VAL(R,V)        (0x6000 | R << 8 | V)
-#define ADD_REGISTER_VAL(R,V)        (0x7000 | ((R & 0x0F00) | (V & 0x0FF)))
-#define CPY_REGISTER(R_DST, R_SRC)   (0x8000 | ((R_DST & 0x0F00) | (R_SRC & 0x00F0)))
-#define REG_OREQ_REG(R_DST, R_SRC)   (0x8001 | ((R_DST & 0x0F00) | (R_SRC & 0x00F0)))
-#define REG_ANDEQ_REG(R_DST, R_SRC)  (0x8002 | ((R_DST & 0x0F00) | (R_SRC & 0x00F0)))
-#define REG_XOREQ_REG(R_DST, R_SRC)  (0x8003 | ((R_DST & 0x0F00) | (R_SRC & 0x00F0)))
-//#define ADD_REGISTER(R_DST, R_SRC)   (0x8004 | ((R_DST & 0x0F00) | (R_SRC & 0x00F0)))
-//#define SUB_REGISTER(R_DST, R_SRC)   (0x8005 | ((R_DST & 0x0F00) | (R_SRC & 0x00F0)))
-#define SHIFT1_RIGHT_SAVE_LEAST(R)   (0x8006 | (R & 0x0F00))
-//#define SUB_CHSIGN_REG(R_DST, R_SRC) (0x8007 |((R_DST & 0x0F00) | (R_SRC & 0x00F0)))
-#define SHIFT1_LEFT_SAVE_LEAST(R)    (0x800E | (R & 0x0F00))
+#define ADD_REGISTER_VAL(R,V)        (0x7000 | R << 8 | V)
+#define CPY_REGISTER(R_DST, R_SRC)   (0x8000 | R_DST << 8 | R_SRC)
+#define REG_OREQ_REG(R_DST, R_SRC)   (0x8001 | ((R_DST << 8) | (R_SRC & 0x00F0)))
+#define REG_ANDEQ_REG(R_DST, R_SRC)  (0x8002 | ((R_DST << 8) | (R_SRC & 0x00F0)))
+#define REG_XOREQ_REG(R_DST, R_SRC)  (0x8003 | ((R_DST << 8) | (R_SRC & 0x00F0)))
+//#define ADD_REGISTER(R_DST, R_SRC)   (0x8004 | ((R_DST << 8) | (R_SRC & 0x00F0)))
+//#define SUB_REGISTER(R_DST, R_SRC)   (0x8005 | ((R_DST << 8) | (R_SRC & 0x00F0)))
+#define SHIFT1_RIGHT_SAVE_LEAST(R)   (0x8006 | (R << 8))
+//#define SUB_CHSIGN_REG(R_DST, R_SRC) (0x8007 |((R_DST << 8) | (R_SRC & 0x00F0)))
+#define SHIFT1_LEFT_SAVE_LEAST(R)    (0x800E | (R << 8))
 #define SET_I(V)                     (0xA000 | (V & 0x0FFF))
 #define SUM_V0_AND_JUMP(V)           (0xB000 | (V & 0x0FFF))
-#define REGSET_RANDOM(R, MAXRND)     (0xC000 | ((R & 0x0F00) | (MAXRND & 0x00FF)))
+#define REGSET_RANDOM(R, MAXRND)     (0xC000 | ((R << 8) | (MAXRND & 0x00FF)))
 // ------------------------------------------------------------------------------------
 
 void load_instruction(Chip8* hardware, unsigned short mem_address, unsigned short instruction)
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
     unsigned short pc_baseaddr = myChip8.pc;
     load_instruction(&myChip8, pc_baseaddr + 0x00, CLEAR_SCREEN);
     load_instruction(&myChip8, pc_baseaddr + 0x02, SET_REGISTER_VAL(0x07, 0x02));
-    load_instruction(&myChip8, pc_baseaddr + 0x04, SKIP_ON_REG_EQUAL_VAL(0x07, 0x01));
+    load_instruction(&myChip8, pc_baseaddr + 0x04, SKIP_ON_REG_EQUAL_VAL(0x07, 0x02));
     load_instruction(&myChip8, pc_baseaddr + 0x06, SKIP_ON_REG_NOTEQ_VAL(0x07, 0x00));
     load_instruction(&myChip8, pc_baseaddr + 0x08, SET_REGISTER_VAL(0x08, 0x01));
     load_instruction(&myChip8, pc_baseaddr + 0x0A, SKIP_ON_REG_EQUAL_REG(0x07, 0x08));
