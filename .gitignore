@@ -4,3 +4,4 @@
 *.sln
 *build*
 *.opendb
+*.user
