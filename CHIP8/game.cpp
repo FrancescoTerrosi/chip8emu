@@ -1,4 +1,4 @@
-#include "chip8.cpp"
+#include "chip8.h"
 
 Chip8 myChip8;
 
