@@ -1,6 +1,6 @@
 *vcxproj*
 *.vs
-CHIP8/Debug/
+Debug
 *.sln
 *build*
 *.opendb
