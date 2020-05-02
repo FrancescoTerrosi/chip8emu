@@ -1,3 +1,6 @@
-*.user
+*vcxproj*
+*.vs
+Debug/
+*.sln
 *build*
 *.opendb
