@@ -95,9 +95,13 @@ bool testClearScren()
     //ESEGUO
     chip8.emulateCycle();
 
-    //TESTO LA DECODE CHE IN QUESTO CASO RIGUARDA SOLO L'OPCODE
+    //TESTO LA DECODE CHE IN QUESTO CASO RIGUARDA SOLO L'OPCODE E GLI ULTIMI 2 BYTE DELL'ISTRUZIONE
     unsigned short opcode = chip8.opcode & 0xF000;
-    bool decodeOk = (opcode == 0x00);
+    //qui c'è un problema logico:
+    //chip8.opcode in realtà è TUTTA L'ISTRUZIONE mentre l'opcode sono solo i due byte più significativi
+
+                      /* vero opcode*/        /** ultimi due byte dell'istruzione **/
+    bool decodeOk = (opcode == 0x00)     &&    (chip8.opcode & 0x00FF) == 0xE0;
     if(!decodeOk)
     {
         printf("%s\n", "testClearScreen failed: wrong decode");
@@ -152,11 +156,80 @@ bool testGoTo()
     return true;
 }
 
+bool testCallSubroutine()
+{
+    unsigned short subroutine_addr = chip8.pc + 0x64;
+    unsigned short return_addr = chip8.pc + 2;
+    load_instruction(&chip8, chip8.pc, SUBROUTINE_CALL(subroutine_addr));
+
+    bool fetchOk = (chip8.memory[chip8.pc] << 8 | chip8.memory[chip8.pc + 1] == SUBROUTINE_CALL(subroutine_addr));
+    if(!fetchOk)
+    {
+        printf("%s\n", "testCallSubroutine failed: wrong fetch");
+        return false;
+    }
+
+    chip8.emulateCycle();
+
+    unsigned short opcode = chip8.opcode & 0xF000;
+    bool decodeOk = (opcode == 0x2000);
+    if(!decodeOk)
+    {
+        printf("%s\n", "testCallSubroutine failed: wrong decode");
+        return false;
+    }
+
+    bool executeOk = (chip8.pc == subroutine_addr) && (chip8.stack[chip8.sp - 1] == return_addr);
+    if(!executeOk)
+    {
+        printf("%s\n", "testCallSubroutine failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testSubroutineReturn()
+{
+    unsigned short return_addr = 0x100;
+    chip8.stack[0] = return_addr;
+    chip8.sp = 1;
+    load_instruction(&chip8, chip8.pc, SUBROUTINE_RETURN);
+
+    bool fetchOk = (chip8.memory[chip8.pc] << 8 | chip8.memory[chip8.pc + 1] == SUBROUTINE_RETURN);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testSubroutineReturn failed: wrong fetch");
+        return false;
+    }
+
+    chip8.emulateCycle();
+
+    unsigned short opcode = chip8.opcode & 0xF000;
+    bool decodeOk = (opcode == 0x00) && (chip8.opcode & 0x00FF) == 0xEE;
+    if(!decodeOk)
+    {
+        printf("%s\n", "testSubroutineReturn failed: wrong decode");
+        return false;
+    }
+
+    bool executeOk = (chip8.pc == return_addr) && (chip8.sp == 0x00);
+    if(!executeOk)
+    {
+        printf("%s\n", "testSubroutineReturn failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
 void run_tests()
 {
     std::vector<bool (*)()> testcases;
     testcases.push_back(&testClearScren);
     testcases.push_back(&testGoTo);
+    testcases.push_back(&testCallSubroutine);
+    testcases.push_back(&testSubroutineReturn);
 
     int nTests = testcases.size();
     int passed = 0;

@@ -5,11 +5,6 @@ Chip8::Chip8()
 
 }
 
-Chip8::~Chip8()
-{
-    delete this;
-}
-
 void Chip8::initialize()
 {
 	pc = 0x200;
@@ -88,7 +83,7 @@ void Chip8::emulateCycle()
 
 		// 0x2NNN   calls subroutine at NNN
 		case 0x2000:
-			stack[sp] = pc;
+            stack[sp] = pc + 0x02;
 			++sp;
 			pc = opcode & 0x0FFF;
 			break;
