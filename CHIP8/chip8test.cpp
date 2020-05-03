@@ -84,15 +84,26 @@ bool testClearScren()
     chip8.gfx[10][20] = 0x01;
     load_instruction(&chip8, chip8.pc, CLEAR_SCREEN);
 
+    //TESTO IL FETCH
     bool loadingOk = (chip8.memory[chip8.pc] == 0x00 && chip8.memory[chip8.pc + 1] == 0xE0);
     if(!loadingOk)
     {
-        printf("%s\n", "testClearScreen failed: wrong load");
+        printf("%s\n", "testClearScreen failed: wrong fetch");
         return false;
     }
 
+    //ESEGUO
     chip8.emulateCycle();
 
+    //TESTO LA DECODE CHE IN QUESTO CASO RIGUARDA SOLO L'OPCODE
+    bool decodeOk = (chip8.opcode == 0xE0);
+    if(!decodeOk)
+    {
+        printf("%s\n", "testClearScreen failed: wrong decode");
+        return false;
+    }
+
+    //TESTO LA EXECUTE
     for(int i = 0; i < GMEM_ROWS; i++)
     {
         for(int j = 0; j < GMEM_COLS; j++)
