@@ -1,21 +1,14 @@
 #include "chip8.h"
 
-unsigned short opcode;		// 2 byte per le operazioni macchina
+Chip8::Chip8()
+{
 
-unsigned char memory[4096];		// 4k per la memoria
+}
 
-unsigned char V[16];		// 16 byte per i registri della CPU
-
-unsigned short I;			//	Index Register
-unsigned short pc;			// Program Counter
-
-unsigned char gfx[64 * 32];  // Graphics
-
-unsigned char delay_timer;
-unsigned char sound_timer;
-
-unsigned short stack[16];
-unsigned short sp;
+Chip8::~Chip8()
+{
+    delete this;
+}
 
 void Chip8::initialize()
 {
@@ -39,17 +32,25 @@ void Chip8::initialize()
 	delay_timer = 60;
 	sound_timer = 60;
 
+    drawFlag = false; // ci sta? sempre inizializzazione a caso
+
 	return;
 }
 
 void Chip8::emulateCycle()
 {
+    if(pc > MEM_SIZE)
+    {
+        printf("%s\n", "Error: program counter out of memory");
+        return;
+    }
+
 	// FETCH OPCODE
-
 	// Devo combinare memory[pc] e memory[pc+1] --> ne leggo uno, shifto di 1 byte e faccio l'or con l'altro byte
-
 	opcode = memory[pc] << 8 | memory[pc + 1];
-
+    // Stampo opcode
+    printf("pc = %hu\tmem[%hu] = %hhu\tmem[%hu] = %hhu\topcode = %hu\n",
+                  pc,      pc, memory[pc], pc+1, memory[pc+1], opcode);
 	// DECODE OPCODE
 
 	switch (opcode & 0xF000)
@@ -62,29 +63,29 @@ void Chip8::emulateCycle()
 			{
 				// clear screen
 				case 0x00E0:
+                    printf("Instruction: %s\n", "Clear Screen");
 					pc += 2;
 					break;
 
 				// return from subroutine
 				case 0x00EE:
-
 					/*
 					VADO A BRACCIO:
 					*/
-
 					--sp;
 					pc = stack[sp];
 					break;
+
 				default:
 					printf("Unknown opcode 0x%X\n", opcode);
 					fflush(stdout);
 			}
 			break;
 
-
 		// 0x1NNN	goto NNN
 		case 0x1000:
 			pc = opcode & 0x0FFF;
+            printf("Instruction: GOTO %hu\n", pc);
 			break;
 
 		// 0x2NNN   calls subroutine at NNN
