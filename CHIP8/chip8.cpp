@@ -50,8 +50,14 @@ void Chip8::emulateCycle()
 	opcode = memory[pc] << 8 | memory[pc + 1];
 
     // Stampo pc, istruzione e opcode
-    printf("pc = %hu\tmem[%hu] = %hhu\tmem[%hu] = %hhu\topcode = %hu\n",
+    printf("pc = %hu\tmem[%hu] = %hhu\tmem[%hu] = %hhu\topcode = 0x%X\n",
                   pc,      pc, memory[pc], pc+1, memory[pc+1], opcode);
+
+    unsigned char op1_uc = 0; //se op1_uc ha valore massimo 255 lo salvo quì
+    unsigned char op2_uc = 0; //se op2_uc ha valore massimo 255 lo salvo qui
+
+    unsigned short op1_us = 0; //se op1_uc ha valore massimo > 255 lo salvo quì
+    //non ci dovrebbe essere bisogno di op2_us perchè per la lunghezza delle istruzioni solo 1 operatore può essere unsigned short
 
 	// DECODE OPCODE
 	switch (opcode & 0xF000)
@@ -88,75 +94,106 @@ void Chip8::emulateCycle()
 
 		// 0x1NNN	goto NNN
 		case 0x1000:
-			pc = opcode & 0x0FFF;
+            op1_us = opcode & 0x0FFF;
+
+            pc = op1_us;
+
             printf("Instruction: GOTO %hu\n", pc);
 			break;
 
 		// 0x2NNN   calls subroutine at NNN
 		case 0x2000:
-            printf("Instruction: call subroutine at %hhu\n", opcode & 0x0FFF);
+            op1_us = opcode & 0x0FFF;
 
-			stack[sp] = pc;
+            printf("Instruction: call subroutine at %hu\n", op1_us);
+
+            stack[sp] = pc + 2; //era stack[sp] = pc, ma così facendo torneresti di nuovo alla CALL_SUBROUTINE entrando in loop
 			++sp;
-			pc = opcode & 0x0FFF;
+            pc = op1_us;
 
             printf("Return address in stack = %hu\n", stack[sp - 1]);
 			break;
 
 		// 0x3XNN	if V[X] == NN, skip next instruction
 		case 0x3000:
-            if (V[(opcode & 0x0F00) >> 8] == (opcode & 0x00FF))
-			{
-				pc += 4;
-			}
+            op1_uc = (opcode & 0x0F00) >> 8;
+            op2_uc = (opcode & 0x00FF);
+            if (V[op1_uc] == op2_uc )
+            {
+                pc += 4;
+            }
+            else
+            {
+                pc += 2;
+            }
 
-            printf("Instruction: SKIP ON V[%hhu] == %hhu\n", (opcode & 0x0F00) >> 8, opcode & 0x00FF);
-            printf("V[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
-			break;
+            printf("Instruction: SKIP ON V[%hhu] == %hhu\n", op1_uc, op2_uc);
+            printf("V[%hhu] = %hhu\n", op1_uc, V[op1_uc]);
+            break;
+
 
 			// 0x4XNN	if V[X] != NN, skip next instruction
 		case 0x4000:
-            if (V[(opcode & 0x0F00) >> 8] != (opcode & 0x00FF))
+            op1_uc = (opcode & 0x0F00) >> 8;
+            op2_uc = (opcode & 0x00FF);
+            if (V[op1_uc] != op2_uc )
 			{
 				pc += 4;
 			}
+            else
+            {
+                pc += 2;
+            }
 
-            printf("Instruction: SKIP ON V[%hhu] != %hhu\n", (opcode & 0x0F00) >> 8, opcode & 0x00FF);
-            printf("V[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
+            printf("Instruction: SKIP ON V[%hhu] != %hhu\n", op1_uc, op2_uc);
+            printf("V[%hhu] = %hhu\n", op1_uc, V[op1_uc]);
 			break;
 
 		// 0x5XY0	if V[X] == V[Y], skip next instruction
 		case 0x5000:
-            if (V[(opcode & 0x0F00) >> 8] == V[opcode & 0x00F0])
+            op1_uc = (opcode & 0x0F00) >> 8;
+            op2_uc = (opcode & 0x00F0) >> 4;
+
+            if (V[op1_uc] == V[op2_uc])
 			{
 				pc += 4;
 			}
+            else
+            {
+                pc += 2;
+            }
 
-            printf("Instruction: SKIP ON V[%hhu] == V[%hhu]\n", (opcode & 0x0F00) >> 8, opcode & 0x00F0);
-            printf("V[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
-            printf("V[%hhu] = %hhu\n", opcode & 0x00F0, V[opcode & 0x00F0]);
+            printf("Instruction: SKIP ON V[%hhu] == V[%hhu]\n", op1_uc, op2_uc);
+            printf("V[%hhu] = %hhu\n", op1_uc, V[op1_uc]);
+            printf("V[%hhu] = %hhu\n", op2_uc, V[op2_uc]);
 			break;
 
 		// 0x6XNN	V[X] = NN
 		case 0x6000:
-            printf("this Instruction: SET V[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, opcode & 0x00FF);
-            printf("Was: V[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[opcode & 0x0F00]);
+            op1_uc = (opcode & 0x0F00) >> 8;
+            op2_uc = opcode & 0x00FF;
 
-            V[(opcode & 0x0F00) >> 8] = (opcode & 0x00FF);
+            printf("Instruction: SET V[%hhu] = %hhu\n", op1_uc, op2_uc);
+            printf("Was: V[%hhu] = %hhu\n", op1_uc, V[op1_uc]);
+
+            V[op1_uc] = op2_uc;
 			pc += 2;
 
-            printf("Is: V[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
+            printf("Is: V[%hhu] = %hhu\n", op1_uc, V[op1_uc]);
 			break;
 
 		// 0x7XNN	V[X] += NN			???? CARRY FLAG IS NOT CHANGED ?????
 		case 0x7000:
-            printf("Instruction: V[%hhu] += %hhu\n", (opcode & 0x0F00) >> 8, opcode & 0x00FF);
-            printf("Was: V[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
+            op1_uc = (opcode & 0x0F00) >> 8;
+            op2_uc = opcode & 0x00FF;
 
-            V[(opcode & 0x0F00) >> 8] += (opcode & 0x00FF);
+            printf("Instruction: V[%hhu] += %hhu\n", op1_uc, op2_uc);
+            printf("Was: V[%hhu] = %hhu\n", op1_uc,  V[op1_uc]);
+
+            V[op1_uc] += op2_uc;
 			pc += 2;
 
-            printf("Is: V[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
+            printf("Is: V[%hhu] = %hhu\n", op1_uc,  V[op1_uc]);
 			break;
 
 		// Handling multiple 0x8 cases
@@ -165,46 +202,58 @@ void Chip8::emulateCycle()
 			{
 				// 0x8XY0	V[X] = V[Y]
 				case 0x0000:
-                    printf("Instruction: V[%hhu] = V[%hhu]\n", (opcode & 0x0F00) >> 8, opcode & 0x00F0);
-                    printf("Was: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8], opcode & 0x00F0, V[opcode & 0x00F0]);
+                    op1_uc = (opcode & 0x0F00) >> 8;
+                    op2_uc = (opcode & 0x00F0) >> 4;
 
-                    V[(opcode & 0x0F00) >> 8] = V[opcode & 0x00F0];
+                    printf("Instruction: V[%hhu] = V[%hhu]\n", op1_uc, op2_uc);
+                    printf("Was: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", op1_uc, V[op1_uc], op2_uc, V[op2_uc]);
+
+                    V[op1_uc] = V[op2_uc];
                     pc += 2;
 
-                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8], opcode & 0x00F0, V[opcode & 0x00F0]);
+                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", op1_uc, V[op1_uc], op2_uc, V[op2_uc]);
 					break;
 				
 				// 0x8XY1	V[X] = V[X] | V[Y]
-				case 0x0001:
-                    printf("Instruction: V[%hhu] |= V[%hhu]\n", (opcode & 0x0F00) >> 8, opcode & 0x00F0);
-                    printf("Was: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8], opcode & 0x00F0, V[opcode & 0x00F0]);
+                case 0x0001:
+                    op1_uc = (opcode & 0x0F00) >> 8;
+                    op2_uc = (opcode & 0x00F0) >> 4;
 
-                    V[(opcode & 0x0F00) >> 8] = (V[(opcode & 0x0F00) >> 8] | V[opcode & 0x00F0]);
+                    printf("Instruction: V[%hhu] |= V[%hhu]\n", op1_uc, op2_uc);
+                    printf("Was: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", op1_uc, V[op1_uc], op2_uc, V[op2_uc]);
+
+                    V[op1_uc] = V[op1_uc] | V[op2_uc];
 					pc += 2;
 
-                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8], opcode & 0x00F0, V[opcode & 0x00F0]);
+                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", op1_uc, V[op1_uc], op2_uc, V[op2_uc]);
 					break;
 					
 				// 0x8XY2	V[X] = V[X] & V[Y]
 				case 0x0002:
-                    printf("Instruction: V[%hhu] &= V[%hhu]\n", (opcode & 0x0F00) >> 8, opcode & 0x00F0);
-                    printf("Was: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8], opcode & 0x00F0, V[opcode & 0x00F0]);
+                    op1_uc = (opcode & 0x0F00) >> 8;
+                    op2_uc = (opcode & 0x00F0) >> 4;
 
-                    V[(opcode & 0x0F00) >> 8] = (V[(opcode & 0x0F00) >> 8] & V[opcode & 0x00F0]);
+                    printf("Instruction: V[%hhu] &= V[%hhu]\n", op1_uc, op2_uc);
+                    printf("Was: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", op1_uc, V[op1_uc], op2_uc, V[op2_uc]);
+
+                    V[op1_uc] = V[op1_uc] & V[op2_uc];
 					pc += 2;
 
-                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8], opcode & 0x00F0, V[opcode & 0x00F0]);
+                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", op1_uc, V[op1_uc], op2_uc, V[op2_uc]);
 					break;
 
                 // 0x8XY3	V[X] = V[X] ^ V[Y]
 				case 0x0003:
-                    printf("Instruction: V[%hhu] ^= V[%hhu]\n", (opcode & 0x0F00) >> 8, opcode & 0x00F0);
-                    printf("Was: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8], opcode & 0x00F0, V[opcode & 0x00F0]);
+                    op1_uc = (opcode & 0x0F00) >> 8;
+                    op2_uc = (opcode & 0x00F0) >> 4;
 
-                    V[(opcode & 0x0F00) >> 8] = (V[(opcode & 0x0F00) >> 8] ^ V[opcode & 0x00F0]);
-					pc += 2;
+                    printf("Instruction: V[%hhu] ^= V[%hhu]\n", op1_uc, op2_uc);
+                    printf("Was: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", op1_uc, V[op1_uc], op2_uc, V[op2_uc]);
 
-                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8], opcode & 0x00F0, V[opcode & 0x00F0]);
+                    V[op1_uc] = V[op1_uc] ^ V[op2_uc];
+                    pc += 2;
+
+                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", op1_uc, V[op1_uc], op2_uc, V[op2_uc]);
 					break;
 
 				/*
@@ -225,14 +274,17 @@ void Chip8::emulateCycle()
 
 				// 0x8XY6	V[F] = bit meno significativo di V[X] and V[X] >> 1
 				case 0x0006:
-                    printf("Instruction: V[15] = least sign. bit of V[%hhu] and V[%hhu] = V[%hhu] >> 1\n", (opcode & 0x0F00) >> 8, (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
-                    printf("Was: V[15] = %hhu\tV[%hhu] = %hhu\n", V[0x000F], (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
+                    op1_uc = (opcode & 0x0F00) >> 8;
+                    //op2_uc (y) non è usato? però nel commento c'è scritto 0x8XY6
 
-                    V[0x000F] = V[(opcode & 0x0F00) >> 8] & 0x0001;
-                    V[(opcode & 0x0F00) >> 8] >> 1;
+                    printf("Instruction: V[15] = least sign. bit of V[%hhu] and V[%hhu] = V[%hhu] >> 1\n", op1_uc, op1_uc, op1_uc);
+                    printf("Was: V[15] = %hhu\tV[%hhu] = %hhu\n", V[0x000F], op1_uc, V[op1_uc]);
+
+                    V[0x000F] = V[op1_uc] & 0x0001;
+                    V[op1_uc] = V[op1_uc] >> 1;
 					pc += 2;
 
-                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", 0x000F, V[0x000F], (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
+                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", 0x000F, V[0x000F], op1_uc, V[op1_uc]);
 					break;
 
 				/*
@@ -247,16 +299,18 @@ void Chip8::emulateCycle()
 
 				// 0x8XYE	V[F] = bit meno significativo di V[X] and V[X] << 1
 				case 0x000E:
-                    printf("Instruction: V[15] = least sign. bit of V[%hhu] and V[%hhu] = V[%hhu] << 1\n", (opcode & 0x0F00) >> 8, (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
-                    printf("Was: V[15] = %hhu\tV[%hhu] = %hhu\n", V[0x000F], (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
+                    op1_uc = (opcode & 0x0F00) >> 8;
+                    //op2_uc (y) non è usato? però nel commento c'è scritto 0x8XY6
 
-                    V[0x000F] = V[(opcode & 0x0F00) >> 8] & 0x0001;
-                    V[(opcode & 0x0F00) >> 8] << 1;
-					pc += 2;
+                    printf("Instruction: V[15] = least sign. bit of V[%hhu] and V[%hhu] = V[%hhu] << 1\n", op1_uc, op1_uc, op1_uc);
+                    printf("Was: V[15] = %hhu\tV[%hhu] = %hhu\n", V[0x000F], op1_uc, V[op1_uc]);
 
-                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", 0x000F, V[0x000F], (opcode & 0x0F00) >> 8, V[(opcode & 0x0F00) >> 8]);
-					break;
+                    V[0x000F] = V[op1_uc] & 0x0001;
+                    V[op1_uc] = V[op1_uc] << 1;
+                    pc += 2;
 
+                    printf("Is: V[%hhu] = %hhu\tV[%hhu] = %hhu\n", 0x000F, V[0x000F], op1_uc, V[op1_uc]);
+                    break;
 
 				default:
 					printf("Unknown opcode 0x%X\n", opcode);
@@ -266,28 +320,38 @@ void Chip8::emulateCycle()
 
 		// 0xANNN -->  set I to address NNN
 		case 0xA000:
-			I = opcode & 0x0FFF;
+            op1_us = opcode & 0x0FFF;
+
+            printf("Instruction: set I = %hu\n", op1_us);
+            printf("Was: I = %hu\n", I);
+
+            I = op1_us;
 			pc += 2;
 
-            printf("Instruction: set I = %hhu\n", I);
+            printf("Is: I = %hu\n", I);
 			break;
 		
 		// 0xBNNN -->  PC = V0 + NNN     jump to address V0+NNN
 		case 0xB000:
-			pc = V[0] + (opcode & 0x0FFF);
+            op1_us = opcode & 0x0FFF;
 
-            printf("Instruction: set PC = V[0] + %hhu\n", (opcode & 0x0FFF));
-            printf("V[0] = %hhu\n", V[0]);
-            printf("V[0] + %hhu = %hhu\n", (opcode & 0x0FFF), pc);
+            pc = V[0] + op1_us;
+
+            printf("Instruction: set PC = V[0] + %hu\n", op1_us);
+            printf("V[0] = %hu\n", V[0]);
+            printf("V[0] + %hu = %hu\n", op1_us, pc);
             break;
 
 		// 0xCXNN -->  V[X] = rand() % NN         0 <= rand <= 255
 		case 0xC000:
-			V[opcode & 0x0F00] = (opcode & 0x00FF) & (rand() % 256);
+            op1_uc = (opcode & 0x0F00) >> 8;
+            op2_uc = (opcode & 0x00FF);
+
+            V[op1_uc] = op2_uc & (rand() % 256); //sei sicuro che così faccia rand() % NN?
 			pc += 2;
 
-            printf("Instruction: set V[%hhu] = rand() modulo %hhu\n", opcode & 0x0F00, opcode & 0x00FF);
-            printf("V[%hhu] = %hhu", opcode & 0x0F00, V[opcode & 0x0F00]);
+            printf("Instruction: set V[%hhu] = rand() modulo %hhu\n", op1_uc, op2_uc);
+            printf("V[%hhu] = %hhu\n", op1_uc, V[op1_uc]);
 			break;
 
 		default:
