@@ -9,7 +9,8 @@
 const auto MEM_SIZE = 4096;
 const auto N_REG =  16;
 const auto STACK_SIZE = 16;
-const auto GMEM_SIZE = 64 * 32;
+const auto GMEM_ROWS = 64;
+const auto GMEM_COLS = 32;
 
 class Chip8
 {
@@ -40,11 +41,11 @@ public:
       0xF0, 0x80, 0xF0, 0x80, 0x80  // F
     };
 
-    unsigned short opcode;              // 2 byte per le operazioni macchina
-    unsigned char memory[MEM_SIZE];     // 4k per la memoria
-    unsigned char V[N_REG];             // 16 registri CPU da 1 byte ciascuno - V[15] NON USARE!
-    unsigned short stack[STACK_SIZE];   // 16 livelli da 2 byte per lo stack 
-    unsigned char gfx[GMEM_SIZE];       // 64*32 byte per la memoria grafica
+    unsigned short opcode;                           // 2 byte per le operazioni macchina
+    unsigned char memory[MEM_SIZE];                  // 4k per la memoria
+    unsigned char V[N_REG];                          // 16 registri CPU da 1 byte ciascuno - V[15] NON USARE!
+    unsigned short stack[STACK_SIZE];                // 16 livelli da 2 byte per lo stack
+    unsigned char gfx[GMEM_ROWS][GMEM_COLS];         // 64*32 byte per la memoria grafica
 
     unsigned short I;                   // Index register
     unsigned short pc;                  // Program Counter

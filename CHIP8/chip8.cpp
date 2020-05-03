@@ -64,6 +64,7 @@ void Chip8::emulateCycle()
 				// clear screen
 				case 0x00E0:
                     printf("Instruction: %s\n", "Clear Screen");
+                    memset(gfx, 0, 64 * 32);
 					pc += 2;
 					break;
 
