@@ -152,7 +152,7 @@ void Chip8::emulateCycle()
 					pc += 2;
 					break;
 
-					// 0x8XY3	V[X] = V[X] ^ V[Y]
+				// 0x8XY3	V[X] = V[X] ^ V[Y]
 				case 0x0003:
 					V[opcode & 0x0F00] = (V[opcode & 0x0F00] ^ V[opcode & 0x00F0]);
 					pc += 2;
