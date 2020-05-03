@@ -85,8 +85,8 @@ bool testClearScren()
     load_instruction(&chip8, chip8.pc, CLEAR_SCREEN);
 
     //TESTO IL FETCH
-    bool loadingOk = (chip8.memory[chip8.pc] == 0x00 && chip8.memory[chip8.pc + 1] == 0xE0);
-    if(!loadingOk)
+    bool fetchOk = (chip8.memory[chip8.pc] << 8 | chip8.memory[chip8.pc + 1]) == CLEAR_SCREEN;
+    if(!fetchOk)
     {
         printf("%s\n", "testClearScreen failed: wrong fetch");
         return false;
@@ -96,7 +96,8 @@ bool testClearScren()
     chip8.emulateCycle();
 
     //TESTO LA DECODE CHE IN QUESTO CASO RIGUARDA SOLO L'OPCODE
-    bool decodeOk = (chip8.opcode == 0xE0);
+    unsigned short opcode = chip8.opcode & 0xF000;
+    bool decodeOk = (opcode == 0x00);
     if(!decodeOk)
     {
         printf("%s\n", "testClearScreen failed: wrong decode");
@@ -117,13 +118,45 @@ bool testClearScren()
     }
 
     return true;
+}
 
+bool testGoTo()
+{
+    unsigned short addr = chip8.pc + 0x64;
+    load_instruction(&chip8, chip8.pc, GOTO(addr)); //deve essere una GOTO 512 + 100 = 612
+
+    bool fetchOk = (chip8.memory[chip8.pc] << 8 | chip8.memory[chip8.pc + 1] == GOTO(addr));
+    if(!fetchOk)
+    {
+        printf("%s\n", "testGoTo failed: wrong fetch");
+        return false;
+    }
+
+    chip8.emulateCycle();
+
+    unsigned short opcode = chip8.opcode & 0xF000;
+    bool decodeOk = (opcode == 0x1000);
+    if(!decodeOk)
+    {
+        printf("%s\n", "testGoTo failed: wrong decode");
+        return false;
+    }
+
+    bool executeOk = (chip8.pc == addr);
+    if(!executeOk)
+    {
+        printf("%s\n", "testGoTo failed: wrong execute");
+        return false;
+    }
+
+    return true;
 }
 
 void run_tests()
 {
     std::vector<bool (*)()> testcases;
     testcases.push_back(&testClearScren);
+    testcases.push_back(&testGoTo);
 
     int nTests = testcases.size();
     int passed = 0;
