@@ -146,13 +146,13 @@ void Chip8::emulateCycle()
 
 		// 0x6XNN	V[X] = NN
 		case 0x6000:
-			V[(opcode & 0x0F00) >> 8] = (opcode & 0x00FF);
+            V[x] = kk;
 			pc += 2;
 			break;
 
 		// 0x7XNN	V[X] += NN			???? CARRY FLAG IS NOT CHANGED ?????
 		case 0x7000:
-			V[(opcode & 0x0F00) >> 8] += (opcode & 0x0FF);
+            V[x] += kk;
 			pc += 2;
 			break;
 

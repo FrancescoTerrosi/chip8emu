@@ -382,6 +382,65 @@ bool testSkipIfRegisterEqualRegisterWhenComparisonIsFalse()
     return true;
 }
 
+bool testSetRegister()
+{
+    unsigned char value = 0x02;
+    unsigned char reg = 0x03;
+    load_instruction(&chip8, chip8.pc, SET_REGISTER_VAL(reg, value));
+
+    unsigned short expected_instruction = SET_REGISTER_VAL(reg, value);
+    unsigned short expected_opcode = SET_REGISTER_VAL(reg, value) & 0xF000;
+
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == expected_instruction) && (chip8.opcode == expected_opcode) && (chip8.x == reg) && (chip8.kk == value);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testSetRegister failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[reg] == value);
+    if(!executeOk)
+    {
+        printf("%s\n", "testSetRegister failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testAddRegister()
+{
+    unsigned char value1 = 0x02;
+    unsigned char value2 = 0x03;
+    unsigned char sum = value1 + value2;
+    unsigned char reg = 0x03;
+    chip8.V[reg] = value1;
+
+    load_instruction(&chip8, chip8.pc, ADD_REGISTER_VAL(reg, value2));
+
+    unsigned short expected_instruction = ADD_REGISTER_VAL(reg, value2);
+    unsigned short expected_opcode = ADD_REGISTER_VAL(reg, value2) & 0xF000;
+
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == expected_instruction) && (chip8.opcode == expected_opcode) && (chip8.x == reg) && (chip8.kk == value2);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testAddtRegister failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[reg] == sum);
+    if(!executeOk)
+    {
+        printf("%s\n", "testAddRegister failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
 
 void run_tests()
 {
@@ -396,6 +455,8 @@ void run_tests()
     testcases.push_back(&testSkipIfRegisterNotEqualValueWhenComparisonIsFalse);
     testcases.push_back(&testSkipIfRegisterEqualRegisterWhenComparisonIsTrue);
     testcases.push_back(&testSkipIfRegisterEqualRegisterWhenComparisonIsFalse);
+    testcases.push_back(&testSetRegister);
+    testcases.push_back(&testAddRegister);
 
     int nTests = testcases.size();
     int passed = 0;
