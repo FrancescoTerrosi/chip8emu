@@ -84,31 +84,26 @@ bool testClearScren()
     chip8.gfx[10][20] = 0x01;
     load_instruction(&chip8, chip8.pc, CLEAR_SCREEN);
 
-    //TESTO IL FETCH
-    bool fetchOk = (chip8.memory[chip8.pc] << 8 | chip8.memory[chip8.pc + 1]) == CLEAR_SCREEN;
+    unsigned short expected_instruction = CLEAR_SCREEN;
+    unsigned short expected_opcode = CLEAR_SCREEN & 0xF000;
+    unsigned short expected_kk = CLEAR_SCREEN & 0x00FF;
+
+    chip8.emulateCycle();
+
+    //TESTO FETCH
+    bool fetchOk = (chip8.instruction == expected_instruction) && (chip8.opcode == expected_opcode) && (chip8.kk == expected_kk);
     if(!fetchOk)
     {
         printf("%s\n", "testClearScreen failed: wrong fetch");
         return false;
     }
 
-    //ESEGUO
-    chip8.emulateCycle();
-
-    //TESTO LA DECODE CHE IN QUESTO CASO RIGUARDA SOLO L'OPCODE E GLI ULTIMI 2 BYTE DELL'ISTRUZIONE
-    unsigned short opcode = chip8.opcode & 0xF000;
-    //qui c'è un problema logico:
-    //chip8.opcode in realtà è TUTTA L'ISTRUZIONE mentre l'opcode sono solo i due byte più significativi
-
-                      /* vero opcode*/        /** ultimi due byte dell'istruzione **/
-    bool decodeOk = (opcode == 0x00)     &&    (chip8.opcode & 0x00FF) == 0xE0;
-    if(!decodeOk)
+    //TESTO LA EXECUTE
+    if(!chip8.drawFlag)
     {
-        printf("%s\n", "testClearScreen failed: wrong decode");
+        printf("%s\n", "testClearScren failed: drawFlag is not true");
         return false;
     }
-
-    //TESTO LA EXECUTE
     for(int i = 0; i < GMEM_ROWS; i++)
     {
         for(int j = 0; j < GMEM_COLS; j++)
@@ -126,27 +121,22 @@ bool testClearScren()
 
 bool testGoTo()
 {
-    unsigned short addr = chip8.pc + 0x64;
-    load_instruction(&chip8, chip8.pc, GOTO(addr)); //deve essere una GOTO 512 + 100 = 612
+    unsigned short expected_addr = chip8.pc + 0x64;
+    load_instruction(&chip8, chip8.pc, GOTO(expected_addr)); //deve essere una GOTO 512 + 100 = 612
 
-    bool fetchOk = (chip8.memory[chip8.pc] << 8 | chip8.memory[chip8.pc + 1] == GOTO(addr));
+    unsigned short expected_instruction = GOTO(expected_addr);
+    unsigned short expected_opcode = GOTO(expected_addr) & 0xF000;
+
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == expected_instruction) && (chip8.opcode == expected_opcode) && (chip8.nnn == expected_addr);
     if(!fetchOk)
     {
         printf("%s\n", "testGoTo failed: wrong fetch");
         return false;
     }
 
-    chip8.emulateCycle();
-
-    unsigned short opcode = chip8.opcode & 0xF000;
-    bool decodeOk = (opcode == 0x1000);
-    if(!decodeOk)
-    {
-        printf("%s\n", "testGoTo failed: wrong decode");
-        return false;
-    }
-
-    bool executeOk = (chip8.pc == addr);
+    bool executeOk = (chip8.pc == expected_addr);
     if(!executeOk)
     {
         printf("%s\n", "testGoTo failed: wrong execute");
@@ -159,27 +149,22 @@ bool testGoTo()
 bool testCallSubroutine()
 {
     unsigned short subroutine_addr = chip8.pc + 0x64;
-    unsigned short return_addr = chip8.pc + 2;
     load_instruction(&chip8, chip8.pc, SUBROUTINE_CALL(subroutine_addr));
 
-    bool fetchOk = (chip8.memory[chip8.pc] << 8 | chip8.memory[chip8.pc + 1] == SUBROUTINE_CALL(subroutine_addr));
+    unsigned short expected_instruction = SUBROUTINE_CALL(subroutine_addr);
+    unsigned short expected_opcode = SUBROUTINE_CALL(subroutine_addr) & 0xF000;
+    unsigned short expected_returnaddr = chip8.pc + 2;
+
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == expected_instruction) && (chip8.opcode == expected_opcode) && (chip8.nnn == subroutine_addr);
     if(!fetchOk)
     {
         printf("%s\n", "testCallSubroutine failed: wrong fetch");
         return false;
     }
 
-    chip8.emulateCycle();
-
-    unsigned short opcode = chip8.opcode & 0xF000;
-    bool decodeOk = (opcode == 0x2000);
-    if(!decodeOk)
-    {
-        printf("%s\n", "testCallSubroutine failed: wrong decode");
-        return false;
-    }
-
-    bool executeOk = (chip8.pc == subroutine_addr) && (chip8.stack[chip8.sp - 1] == return_addr);
+    bool executeOk = (chip8.pc == subroutine_addr) && (chip8.stack[chip8.sp - 1] == expected_returnaddr);
     if(!executeOk)
     {
         printf("%s\n", "testCallSubroutine failed: wrong execute");
@@ -191,29 +176,25 @@ bool testCallSubroutine()
 
 bool testSubroutineReturn()
 {
-    unsigned short return_addr = 0x100;
-    chip8.stack[0] = return_addr;
+    unsigned short expected_returnaddr = 0x100;
+    chip8.stack[0] = expected_returnaddr;
     chip8.sp = 1;
     load_instruction(&chip8, chip8.pc, SUBROUTINE_RETURN);
 
-    bool fetchOk = (chip8.memory[chip8.pc] << 8 | chip8.memory[chip8.pc + 1] == SUBROUTINE_RETURN);
+    unsigned short expected_instruction = SUBROUTINE_RETURN;
+    unsigned short expected_opcode = SUBROUTINE_RETURN & 0xF000;
+    unsigned short expected_kk = SUBROUTINE_RETURN & 0x00FF;
+
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction) == expected_instruction && (chip8.opcode == expected_opcode) && (chip8.kk == expected_kk);
     if(!fetchOk)
     {
         printf("%s\n", "testSubroutineReturn failed: wrong fetch");
         return false;
     }
 
-    chip8.emulateCycle();
-
-    unsigned short opcode = chip8.opcode & 0xF000;
-    bool decodeOk = (opcode == 0x00) && (chip8.opcode & 0x00FF) == 0xEE;
-    if(!decodeOk)
-    {
-        printf("%s\n", "testSubroutineReturn failed: wrong decode");
-        return false;
-    }
-
-    bool executeOk = (chip8.pc == return_addr) && (chip8.sp == 0x00);
+    bool executeOk = (chip8.pc == expected_returnaddr) && (chip8.sp == 0x00);
     if(!executeOk)
     {
         printf("%s\n", "testSubroutineReturn failed: wrong execute");
@@ -223,6 +204,185 @@ bool testSubroutineReturn()
     return true;
 }
 
+bool testSkipIfRegisterEqualValueWhenComparisonIsTrue()
+{
+    unsigned char value = 0x17;
+    unsigned char reg = 0x05;
+    chip8.V[reg] = value;
+    load_instruction(&chip8, chip8.pc, SKIP_ON_REG_EQUAL_VAL(reg, value));
+
+    unsigned short expected_instruction = SKIP_ON_REG_EQUAL_VAL(reg, value);
+    unsigned short expected_opcode = SKIP_ON_REG_EQUAL_VAL(reg, value) & 0xF000;
+    unsigned short expected_pc = chip8.pc + 4;
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == expected_instruction) && (chip8.opcode == expected_opcode) && (chip8.x == reg) && (chip8.kk == value);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testSkipIfRegisterEqualValueWhenComparisonIsTrue failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.pc == expected_pc);
+    if(!executeOk)
+    {
+        printf("%s\n", "testSkipIfRegisterEqualValueWhenComparisonIsTrue failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testSkipIfRegisterEqualValueWhenComparisonIsFalse()
+{
+    unsigned char value = 0x17;
+    unsigned char reg = 0x05;
+    chip8.V[reg] = 0x00;
+    load_instruction(&chip8, chip8.pc, SKIP_ON_REG_EQUAL_VAL(reg, value));
+
+    unsigned short expected_instruction = SKIP_ON_REG_EQUAL_VAL(reg, value);
+    unsigned short expected_opcode = SKIP_ON_REG_EQUAL_VAL(reg, value) & 0xF000;
+    unsigned short expected_pc = chip8.pc + 2;
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == expected_instruction) && (chip8.opcode == expected_opcode) && (chip8.x == reg) && (chip8.kk == value);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testSkipIfRegisterEqualValueWhenComparisonIsFalse failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.pc == expected_pc);
+    if(!executeOk)
+    {
+        printf("%s\n", "testSkipIfRegisterEqualValueWhenComparisonIsFalse failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testSkipIfRegisterNotEqualValueWhenComparisonIsTrue()
+{
+    unsigned char value = 0x17;
+    unsigned char reg = 0x05;
+    chip8.V[reg] = 0x00;
+    load_instruction(&chip8, chip8.pc, SKIP_ON_REG_NOTEQ_VAL(reg, value));
+
+    unsigned short expected_instruction = SKIP_ON_REG_NOTEQ_VAL(reg, value);
+    unsigned short expected_opcode = SKIP_ON_REG_NOTEQ_VAL(reg, value) & 0xF000;
+    unsigned short expected_pc = chip8.pc + 4;
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == expected_instruction) && (chip8.opcode == expected_opcode) && (chip8.x == reg) && (chip8.kk == value);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testSkipIfRegisterNotEqualValueWhenComparisonIsTrue failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.pc == expected_pc);
+    if(!executeOk)
+    {
+        printf("%s\n", "testSkipIfRegisterNotEqualValueWhenComparisonIsTrue failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testSkipIfRegisterNotEqualValueWhenComparisonIsFalse()
+{
+    unsigned char value = 0x17;
+    unsigned char reg = 0x05;
+    chip8.V[reg] = value;
+    load_instruction(&chip8, chip8.pc, SKIP_ON_REG_NOTEQ_VAL(reg, value));
+
+    unsigned short expected_instruction = SKIP_ON_REG_NOTEQ_VAL(reg, value);
+    unsigned short expected_opcode = SKIP_ON_REG_NOTEQ_VAL(reg, value) & 0xF000;
+    unsigned short expected_pc = chip8.pc + 2;
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == expected_instruction) && (chip8.opcode == expected_opcode) && (chip8.x == reg) && (chip8.kk == value);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testSkipIfRegisterNotEqualValueWhenComparisonIsFalse failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.pc == expected_pc);
+    if(!executeOk)
+    {
+        printf("%s\n", "testSkipIfRegisterNotEqualValueWhenComparisonIsFalse failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testSkipIfRegisterEqualRegisterWhenComparisonIsTrue()
+{
+    unsigned char value = 0x17;
+    unsigned char reg1 = 0x05;
+    unsigned char reg2 = 0x0A;
+    chip8.V[reg1] = value;
+    chip8.V[reg2] = value;
+    load_instruction(&chip8, chip8.pc, SKIP_ON_REG_EQUAL_REG(reg1, reg2));
+
+    unsigned short expected_instruction = SKIP_ON_REG_EQUAL_REG(reg1, reg2);
+    unsigned short expected_opcode = SKIP_ON_REG_EQUAL_REG(reg1, reg2) & 0xF000;
+    unsigned short expected_pc = chip8.pc + 4;
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == expected_instruction) && (chip8.opcode == expected_opcode) && (chip8.x == reg1) && (chip8.y == reg2);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testSkipIfRegisterEqualRegisterWhenComparisonIsTrue failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.pc == expected_pc);
+    if(!executeOk)
+    {
+        printf("%s\n", "testSkipIfRegisterEqualRegisterWhenComparisonIsTrue failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testSkipIfRegisterEqualRegisterWhenComparisonIsFalse()
+{
+    unsigned char value = 0x17;
+    unsigned char reg1 = 0x05;
+    unsigned char reg2 = 0x0A;
+    chip8.V[reg1] = value + 1;
+    chip8.V[reg2] = value - 1;
+    load_instruction(&chip8, chip8.pc, SKIP_ON_REG_EQUAL_REG(reg1, reg2));
+
+    unsigned short expected_instruction = SKIP_ON_REG_EQUAL_REG(reg1, reg2);
+    unsigned short expected_opcode = SKIP_ON_REG_EQUAL_REG(reg1, reg2) & 0xF000;
+    unsigned short expected_pc = chip8.pc + 2;
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == expected_instruction) && (chip8.opcode == expected_opcode) && (chip8.x == reg1) && (chip8.y == reg2);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testSkipIfRegisterEqualRegisterWhenComparisonIsFalse failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.pc == expected_pc);
+    if(!executeOk)
+    {
+        printf("%s\n", "testSkipIfRegisterEqualRegisterWhenComparisonIsFalse failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+
 void run_tests()
 {
     std::vector<bool (*)()> testcases;
@@ -230,6 +390,12 @@ void run_tests()
     testcases.push_back(&testGoTo);
     testcases.push_back(&testCallSubroutine);
     testcases.push_back(&testSubroutineReturn);
+    testcases.push_back(&testSkipIfRegisterEqualValueWhenComparisonIsTrue);
+    testcases.push_back(&testSkipIfRegisterEqualValueWhenComparisonIsFalse);
+    testcases.push_back(&testSkipIfRegisterNotEqualValueWhenComparisonIsTrue);
+    testcases.push_back(&testSkipIfRegisterNotEqualValueWhenComparisonIsFalse);
+    testcases.push_back(&testSkipIfRegisterEqualRegisterWhenComparisonIsTrue);
+    testcases.push_back(&testSkipIfRegisterEqualRegisterWhenComparisonIsFalse);
 
     int nTests = testcases.size();
     int passed = 0;
@@ -245,7 +411,9 @@ void run_tests()
     }
 
     float failureRate = (float)(nTests - passed) / (float) nTests;
-    printf("Tests run: %d\nPassed: %d\nFailed: %d\nFailure rate: %f %%\n", nTests, passed, nTests - passed, failureRate*100.0);
+    printf("\n\n-------------------------------- TEST REPORT --------------------------------\n"
+           "Tests run: %d\nPassed: %d\nFailed: %d\nFailure rate: %f %%\n", nTests, passed, nTests - passed, failureRate*100.0);
+    printf("%s\n\n","-----------------------------------------------------------------------------");
 }
 
 int main()

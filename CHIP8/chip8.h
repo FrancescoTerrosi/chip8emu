@@ -40,7 +40,13 @@ public:
       0xF0, 0x80, 0xF0, 0x80, 0x80  // F
     };
 
-    unsigned short opcode;                           // 2 byte per le operazioni macchina
+    unsigned short instruction;                      // 2 byte per le operazioni macchina
+    unsigned short opcode;                           // Quì salvo opcode (per cui vale opcode = instruction & 0xF000) <-- il msb
+    unsigned char x;                                 // Quì salvo 1 byte per operando x
+    unsigned char y;                                 // Quì salvo 1 byte per operando y
+    unsigned char n;                                 // Quì salvo 1 byte per operando n
+    unsigned char kk;                                // Quì salvo 1 byte per operando kk
+    unsigned short nnn;                              // Quì salvo 2 byte per operando nnn
     unsigned char memory[MEM_SIZE];                  // 4k per la memoria
     unsigned char V[N_REG];                          // 16 registri CPU da 1 byte ciascuno - V[15] NON USARE!
     unsigned short stack[STACK_SIZE];                // 16 livelli da 2 byte per lo stack
