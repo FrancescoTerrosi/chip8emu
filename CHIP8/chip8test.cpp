@@ -16,10 +16,10 @@
 #define REG_OREQ_REG(R_DST, R_SRC)   (0x8001 | R_DST << 8 | R_SRC << 4)
 #define REG_ANDEQ_REG(R_DST, R_SRC)  (0x8002 | R_DST << 8 | R_SRC << 4)
 #define REG_XOREQ_REG(R_DST, R_SRC)  (0x8003 | R_DST << 8 | R_SRC << 4)
-//#define ADD_REGISTER(R_DST, R_SRC)   (0x8004 | R_DST << 8 | R_SRC << 4)
-//#define SUB_REGISTER(R_DST, R_SRC)   (0x8005 | R_DST << 8 | R_SRC << 4)
+#define ADD_REGISTER(R_DST, R_SRC)   (0x8004 | R_DST << 8 | R_SRC << 4)
+#define SUB_REGISTER(R_DST, R_SRC)   (0x8005 | R_DST << 8 | R_SRC << 4)
 #define SHIFT1_RIGHT_SAVE_LEAST(R)   (0x8006 | R << 8)
-//#define SUB_CHSIGN_REG(R_DST, R_SRC) (0x8007 R_DST << 8 | R_SRC << 4)
+#define SUB_CHSIGN_REG(R_DST, R_SRC) (0x8007 | R_DST << 8 | R_SRC << 4)
 #define SHIFT1_LEFT_SAVE_LEAST(R)    (0x800E | R << 8)
 #define SET_I(V)                     (0xA000 | V)
 #define SUM_V0_AND_JUMP(V)           (0xB000 | V)
@@ -82,7 +82,9 @@ void setup()
 bool testClearScren()
 {
     chip8.gfx[10][20] = 0x01;
-    load_instruction(&chip8, chip8.pc, CLEAR_SCREEN);
+    unsigned short initpc = chip8.pc;
+
+    load_instruction(&chip8, initpc, CLEAR_SCREEN);
 
     unsigned short expected_instruction = CLEAR_SCREEN;
     unsigned short expected_opcode = CLEAR_SCREEN & 0xF000;
@@ -103,6 +105,10 @@ bool testClearScren()
     {
         printf("%s\n", "testClearScren failed: drawFlag is not true");
         return false;
+    }
+    if(chip8.pc != (initpc + 0x02))
+    {
+        printf("%s\n", "testClearScren failed: pc was not incremented");
     }
     for(int i = 0; i < GMEM_ROWS; i++)
     {
@@ -386,7 +392,9 @@ bool testSetRegister()
 {
     unsigned char value = 0x02;
     unsigned char reg = 0x03;
-    load_instruction(&chip8, chip8.pc, SET_REGISTER_VAL(reg, value));
+    unsigned short initpc = chip8.pc;
+
+    load_instruction(&chip8, initpc, SET_REGISTER_VAL(reg, value));
 
     unsigned short expected_instruction = SET_REGISTER_VAL(reg, value);
     unsigned short expected_opcode = SET_REGISTER_VAL(reg, value) & 0xF000;
@@ -400,7 +408,7 @@ bool testSetRegister()
         return false;
     }
 
-    bool executeOk = (chip8.V[reg] == value);
+    bool executeOk = (chip8.V[reg] == value) && (chip8.pc == (initpc + 0x02));
     if(!executeOk)
     {
         printf("%s\n", "testSetRegister failed: wrong execute");
@@ -416,9 +424,10 @@ bool testAddRegister()
     unsigned char value2 = 0x03;
     unsigned char sum = value1 + value2;
     unsigned char reg = 0x03;
+    unsigned short initpc = chip8.pc;
     chip8.V[reg] = value1;
 
-    load_instruction(&chip8, chip8.pc, ADD_REGISTER_VAL(reg, value2));
+    load_instruction(&chip8, initpc, ADD_REGISTER_VAL(reg, value2));
 
     unsigned short expected_instruction = ADD_REGISTER_VAL(reg, value2);
     unsigned short expected_opcode = ADD_REGISTER_VAL(reg, value2) & 0xF000;
@@ -432,7 +441,7 @@ bool testAddRegister()
         return false;
     }
 
-    bool executeOk = (chip8.V[reg] == sum);
+    bool executeOk = (chip8.V[reg] == sum) && (chip8.pc == initpc + 0x02);
     if(!executeOk)
     {
         printf("%s\n", "testAddRegister failed: wrong execute");
@@ -440,6 +449,373 @@ bool testAddRegister()
     }
 
     return true;
+}
+
+bool testCpyReg(unsigned char r1, unsigned char r2, unsigned short instr)
+{
+    chip8.V[r2] = 0x02;
+    unsigned short initpc = chip8.pc;
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == r1) && (chip8.y == r2) && (chip8.n == 0x0);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testCpyReg failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[r1] == chip8.V[r2]) && (chip8.pc == (initpc + 0x02));
+    if(!executeOk)
+    {
+        printf("%s\n", "testCpyReg failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testAndReg(unsigned char r1, unsigned char r2, unsigned short instr)
+{
+    unsigned short initpc = chip8.pc;
+    chip8.V[r1] = 0x02;
+    chip8.V[r2] = 0x03;
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == r1) && (chip8.y == r2) && (chip8.n == 0x2);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testAndReg failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[r1] == (0x02 & chip8.V[r2])) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testAndReg failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testOrReg(unsigned char r1, unsigned char r2, unsigned short instr)
+{
+    unsigned short initpc = chip8.pc;
+    chip8.V[r1] = 0x04;
+    chip8.V[r2] = 0x07;
+
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == r1) && (chip8.y == r2) && (chip8.n == 0x1);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testOrReg failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[r1] == (0x04 | chip8.V[r2])) && (chip8.pc == initpc + 0x02);
+
+    if(!executeOk)
+    {
+        printf("%s\n", "testOrReg failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testXorReg(unsigned char r1, unsigned char r2, unsigned short instr)
+{
+    unsigned short initpc = chip8.pc;
+    chip8.V[r1] = 0x04;
+    chip8.V[r2] = 0x07;
+
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == r1) && (chip8.y == r2) && (chip8.n == 0x3);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testXorReg failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[r1] == (0x04 ^ chip8.V[r2])) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testXorReg failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testPlusWhenNoCarry(unsigned char r1, unsigned char r2, unsigned short instr)
+{
+    unsigned short initpc = chip8.pc;
+    chip8.V[r1] = 0x04;
+    chip8.V[r2] = 0x17;
+
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == r1) && (chip8.y == r2) && (chip8.n == 0x4);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testPlusWhenNoCarry failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[r1] == (chip8.V[r2] + 0x04)) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testPlusWhenNoCarry failed: wrong execute");
+        return false;
+    }
+    return true;
+}
+
+bool testPlusWhenCarry(unsigned char r1, unsigned char r2, unsigned short instr)
+{
+    unsigned short initpc = chip8.pc;
+    unsigned char val1 = 150;
+    unsigned char val2 = 200;
+    unsigned char expected_sum = val1 + val2;
+    chip8.V[r1] = val1;
+    chip8.V[r2] = val2;
+
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == r1) && (chip8.y == r2) && (chip8.n == 0x4);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testPlusWhenCarry failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[r1] == expected_sum) && (chip8.V[0xF] == 1) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testPlusWhenCarry failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testMinusWhenNoCarry(unsigned char r1, unsigned char r2, unsigned short instr)
+{
+    unsigned short initpc = chip8.pc;
+    chip8.V[r1] = 0x50;
+    chip8.V[r2] = 0x17;
+
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == r1) && (chip8.y == r2) && (chip8.n == 0x5);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testMinusWhenNoCarry failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[r1] == 0x50 - chip8.V[r2]) && (chip8.V[0xF] == 0) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testMinusWhenNoCarry failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testMinusWhenCarry(unsigned char r1, unsigned char r2, unsigned short instr)
+{
+    unsigned short initpc = chip8.pc;
+    chip8.V[r2] = 0x70;
+    chip8.V[r1] = 0x50;
+    unsigned char expected_diff = chip8.V[r1] - chip8.V[r2];
+
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == r1) && (chip8.y == r2) && (chip8.n == 0x5);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testMinusWhenCarry failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[r1] == expected_diff) && (chip8.V[0xF] == 1) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testMinusWhenCarry failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testMinusChsignWhenNoCarry(unsigned char r1, unsigned char r2, unsigned short instr)
+{
+    unsigned short initpc = chip8.pc;
+    chip8.V[r2] = 0x70;
+    chip8.V[r1] = 0x50;
+    unsigned char expected_diff = chip8.V[r2] - chip8.V[r1];
+
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == r1) && (chip8.y == r2) && (chip8.n == 0x7);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testMinusChsignWhenNoCarry failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[r1] == expected_diff) && (chip8.V[0xF] == 0) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testMinusChsignWhenNoCarry failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testMinusChsignWhenCarry(unsigned char r1, unsigned char r2, unsigned short instr)
+{
+    unsigned short initpc = chip8.pc;
+    chip8.V[r2] = 0x50;
+    chip8.V[r1] = 0x70;
+    unsigned char expected_diff = chip8.V[r2] - chip8.V[r1];
+
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == r1) && (chip8.y == r2) && (chip8.n == 0x7);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testMinusChsignWhenCarry failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[r1] == expected_diff) && (chip8.V[0xF] == 1) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testMinusChsignWhenCarry failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testShift1Left(unsigned char reg, unsigned short instr)
+{
+    unsigned short initpc = chip8.pc;
+    chip8.V[reg] = 0x50;
+
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == reg) && (chip8.n == 0xE);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testShift1Left failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[reg] == 0x50 << 1) && (chip8.V[0xF] == (0x50 & 0x1)) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testShift1Left failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testShift1Right(unsigned char reg, unsigned short instr)
+{
+    unsigned short initpc = chip8.pc;
+    chip8.V[reg] = 0x47;
+
+    load_instruction(&chip8, initpc, instr);
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == instr) && (chip8.opcode == (instr & 0xF000)) && (chip8.x == reg) && (chip8.n == 0x6);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testShift1Right failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[reg] == 0x47 >> 1) && (chip8.V[0xF] == (0x47 & 0x1)) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testShift1Right failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+
+bool testMathOperations()
+{
+    unsigned char reg1 = 0x0B;
+    unsigned char reg2 = 0x0C;
+    unsigned short SET_V11_EQUAL_V12 = CPY_REGISTER(reg1, reg2);
+    unsigned short V11_ANDEQ_V12 = REG_ANDEQ_REG(reg1, reg2);
+    unsigned short V11_OREQ_V12 = REG_OREQ_REG(reg1, reg2);
+    unsigned short V11_XOREQ_V12 = REG_XOREQ_REG(reg1, reg2);
+    unsigned short V11_PLUSEQ_V12 = ADD_REGISTER(reg1, reg2);
+    unsigned short V11_MINUSEQ_V12 = SUB_REGISTER(reg1, reg2);
+    unsigned short V11_MINUSEQ_V12_CHS = SUB_CHSIGN_REG(reg1, reg2);
+    unsigned short V11_SHIFT1RIGHT = SHIFT1_RIGHT_SAVE_LEAST(reg1);
+    unsigned short V11_SHIFT1LEFT = SHIFT1_LEFT_SAVE_LEAST(reg1);
+
+    setup();
+    bool testSet = testCpyReg(reg1, reg2, SET_V11_EQUAL_V12);
+    setup();
+    bool testAnd = testAndReg(reg1, reg2, V11_ANDEQ_V12);
+    setup();
+    bool testOr = testOrReg(reg1, reg2, V11_OREQ_V12);
+    setup();
+    bool testXor = testXorReg(reg1, reg2, V11_XOREQ_V12);
+    setup();
+    bool testPlus1 = testPlusWhenNoCarry(reg1, reg2, V11_PLUSEQ_V12);
+    setup();
+    bool testPlus2 = testPlusWhenCarry(reg1, reg2, V11_PLUSEQ_V12);
+    setup();
+    bool testMinus1 = testMinusWhenNoCarry(reg1, reg2, V11_MINUSEQ_V12);
+    setup();
+    bool testMinus2 = testMinusWhenCarry(reg1, reg2, V11_MINUSEQ_V12);
+    setup();
+    bool testMinusChsign1 = testMinusChsignWhenNoCarry(reg1, reg2, V11_MINUSEQ_V12_CHS);
+    setup();
+    bool testMinusChsign2 = testMinusChsignWhenCarry(reg1, reg2, V11_MINUSEQ_V12_CHS);
+    setup();
+    bool testShiftLeft = testShift1Left(reg1, V11_SHIFT1LEFT);
+    setup();
+    bool testShiftRight = testShift1Right(reg1, V11_SHIFT1RIGHT);
+
+    return testSet          &&
+           testAnd          &&
+           testOr           &&
+           testXor          &&
+           testPlus1        &&
+           testPlus2        &&
+           testMinus1       &&
+           testMinus2       &&
+           testMinusChsign1 &&
+           testMinusChsign2 &&
+           testShiftLeft    &&
+           testShiftRight;
 }
 
 void run_tests()
@@ -457,6 +833,7 @@ void run_tests()
     testcases.push_back(&testSkipIfRegisterEqualRegisterWhenComparisonIsFalse);
     testcases.push_back(&testSetRegister);
     testcases.push_back(&testAddRegister);
+    testcases.push_back(&testMathOperations);
 
     int nTests = testcases.size();
     int passed = 0;
@@ -468,6 +845,10 @@ void run_tests()
         if(pass)
         {
             passed += 1;
+        }
+        else
+        {
+            exit(0);
         }
     }
 

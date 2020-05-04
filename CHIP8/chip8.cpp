@@ -134,6 +134,7 @@ void Chip8::emulateCycle()
 
 		// 0x5XY0	if V[X] == V[Y], skip next instruction
 		case 0x5000:
+            printf("Instruction: skip next instruction if V[%hhu] == V[%hhu]\n", x, y);
             if (V[x] == V[y])
 			{
 				pc += 4;
@@ -146,81 +147,88 @@ void Chip8::emulateCycle()
 
 		// 0x6XNN	V[X] = NN
 		case 0x6000:
+            printf("Instruction: set V[%hhu] = %hhu\n", x, kk);
             V[x] = kk;
 			pc += 2;
 			break;
 
 		// 0x7XNN	V[X] += NN			???? CARRY FLAG IS NOT CHANGED ?????
 		case 0x7000:
+            printf("Instruction: set V[%hhu] += %hhu\n", x, kk);
             V[x] += kk;
 			pc += 2;
 			break;
 
 		// Handling multiple 0x8 cases
 		case 0x8000:
-			switch (opcode & 0x000F)
+            switch (n)
 			{
 				// 0x8XY0	V[X] = V[Y]
 				case 0x0000:
-					V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
+                    printf("Instruction: set V[%hhu] = V[%hhu]\n", x, y);
+                    V[x] = V[y];
 					pc += 2;
 					break;
 				
 				// 0x8XY1	V[X] = V[X] | V[Y]
 				case 0x0001:
-					V[(opcode & 0x0F00) >> 8] = (V[(opcode & 0x0F00) >> 8] | V[(opcode & 0x00F0) >> 4]);
+                    printf("Instruction: set V[%hhu] |= V[%hhu]\n", x, y);
+                    V[x] = V[x] | V[y];
 					pc += 2;
 					break;
 					
 				// 0x8XY2	V[X] = V[X] & V[Y]
 				case 0x0002:
-					V[(opcode & 0x0F00) >> 8] = (V[(opcode & 0x0F00) >> 8] & V[(opcode & 0x00F0) >> 4]);
+                    printf("Instruction: set V[%hhu] &= V[%hhu]\n", x, y);
+                    V[x] = V[x] & V[y];
 					pc += 2;
 					break;
 
 				// 0x8XY3	V[X] = V[X] ^ V[Y]
 				case 0x0003:
-					V[(opcode & 0x0F00) >> 8] = (V[(opcode & 0x0F00) >> 8] ^ V[(opcode & 0x00F0) >> 4]);
+                    printf("Instruction: set V[%hhu] ^= V[%hhu]\n", x, y);
+                    V[x] = V[x] ^ V[y];
 					pc += 2;
 					break;
 
-				/*
-				
 				// 0x8XY4	V[X] = V[X] + V[Y]		V[F] = 1 if carry, else 0
 				case 0x0004:
-					V[opcode & 0x0F00] = (V[opcode & 0x0F00] + V[opcode & 0x00F0]);
+                    printf("Instruction: set V[%hhu] += V[%hhu]\n", x, y);
+                    V[0xF] = ((int)V[x] + (int)V[y] > 255) ? 1 : 0; //casto V[x] e V[y] a interi e guardo se la somma è maggiore di 255 quindi overflow
+                    V[x] = V[x] + V[y];
 					pc += 2;
 					break;
 					
 				// 0x8XY5	V[X] = V[X] - V[Y]		V[F] = 0 if borrow, else 1
 				case 0x0005:
-					V[opcode & 0x0F00] = (V[opcode & 0x0F00] - V[opcode & 0x00F0]);
+                    printf("Instruction: set V[%hhu] -= V[%hhu]\n", x, y);
+                    V[0xF] = (V[x] > V[y]) ? 0 : 1;
+                    V[x] = V[x] - V[y];
 					pc += 2;
 					break;
-
-					*/
 
 				// 0x8XY6	V[F] = bit meno significativo di V[X] and V[X] >> 1
 				case 0x0006:
-					V[0x000F] = V[(opcode & 0x0F00) >> 8] & 0x0001;
-					V[(opcode & 0x0F00) >> 8] >> 1;
+                    printf("Instruction: shift right V[%hhu]\n", x);
+                    V[0xF] = V[x] & 0x0001;
+                    V[x] = V[x] >> 1;
 					pc += 2;
 					break;
 
-				/*
 
 				// 0x8XY7	V[X] = V[Y] - V[X]		V[F] = 0 if borrow, else 1
 				case 0x0007:
-					V[opcode & 0x0F00] = (V[opcode & 0x00F0] - V[opcode & 0x0F00]);
-					pc += 2;
-					break;
-
-				*/
+                    printf("Instruction: set V[%hhu] = V[%hhu] - V[%hhu]\n", x, y, x);
+                    V[0xF] = (V[y] > V[x]) ? 0 : 1;
+                    V[x] = V[y] - V[x];
+                    pc += 2;
+                    break;
 
 				// 0x8XYE	V[F] = bit meno significativo di V[X] and V[X] << 1
 				case 0x000E:
-					V[0x000F] = V[(opcode & 0x0F00) >> 8] & 0x0001;
-					V[(opcode & 0x0F00) >> 8] << 1;
+                    printf("Instruction: shift left V[%hhu]\n", x);
+                    V[0xF] = V[x] & 0x0001;
+                    V[x] = V[x] << 1;
 					pc += 2;
 					break;
 
