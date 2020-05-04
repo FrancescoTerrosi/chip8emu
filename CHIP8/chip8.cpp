@@ -241,18 +241,21 @@ void Chip8::emulateCycle()
 
 		// 0xANNN -->  set I to address NNN
 		case 0xA000:
-			I = opcode & 0x0FFF;
+            printf("Instruction: set I = %hu\n", nnn);
+            I = nnn;
 			pc += 2;
 			break;
 		
 		// 0xBNNN -->  PC = V0 + NNN     jump to address V0+NNN
 		case 0xB000:
-			pc = V[0] + (opcode & 0x0FFF);
+            printf("Instruction: set PC = V[0] + %hu\n", nnn);
+            pc = V[0] + nnn;
 			break;
 
 		// 0xCXNN -->  V[X] = rand() % NN         0 <= rand <= 255
 		case 0xC000:
-			V[(opcode & 0x0F00) >> 8] = (opcode & 0x00FF) & (rand() % 256);
+            printf("Instruction: set V[%hhu] = rand() %% %hhu\n", x, kk);
+            V[x] = (unsigned char)((rand() % 256)) % kk;
 			pc += 2;
 			break;
 

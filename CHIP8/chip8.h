@@ -59,6 +59,7 @@ public:
     unsigned char delay_timer;
     unsigned char sound_timer;
     unsigned short drawFlag;
+
 };
 
 #endif //CHIP8_H

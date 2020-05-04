@@ -818,6 +818,83 @@ bool testMathOperations()
            testShiftRight;
 }
 
+bool testRandom()
+{
+    unsigned short initpc = chip8.pc;
+    unsigned char reg = 0x02;
+    unsigned char maxrnd = 0x24;
+    chip8.V[reg] = maxrnd + 0x1;
+
+    load_instruction(&chip8, initpc, REGSET_RANDOM(reg, maxrnd));
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == REGSET_RANDOM(reg, maxrnd)) && (chip8.opcode == (REGSET_RANDOM(reg, maxrnd) & 0xF000)) && (chip8.x == reg) && (chip8.kk == maxrnd);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testRandom failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[reg] < maxrnd) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testRandom failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testSetI()
+{
+    unsigned short initpc = chip8.pc;
+    unsigned short expected_i = 0x217;
+
+    load_instruction(&chip8, initpc, SET_I(expected_i));
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == SET_I(expected_i)) && (chip8.opcode == (SET_I(expected_i) & 0xF000)) && (chip8.nnn = expected_i);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testSetI failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.I == expected_i) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testSetI failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testJumpFromV0()
+{
+    unsigned short offset = 0x317;
+    chip8.V[0] = 0x17;
+
+    load_instruction(&chip8, chip8.pc, SUM_V0_AND_JUMP(offset));
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == SUM_V0_AND_JUMP(offset)) && (chip8.opcode == (SUM_V0_AND_JUMP(offset) & 0xF000)) && (chip8.nnn = offset);
+    if(!fetchOk)
+    {
+        printf("%s\n", "testJumpFromV0 failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = chip8.pc == (chip8.V[0] + offset);
+    if(!executeOk)
+    {
+        printf("%s\n", "testJumpFromV0 failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
 void run_tests()
 {
     std::vector<bool (*)()> testcases;
@@ -834,6 +911,9 @@ void run_tests()
     testcases.push_back(&testSetRegister);
     testcases.push_back(&testAddRegister);
     testcases.push_back(&testMathOperations);
+    testcases.push_back(&testRandom);
+    testcases.push_back(&testSetI);
+    testcases.push_back(&testJumpFromV0);
 
     int nTests = testcases.size();
     int passed = 0;
