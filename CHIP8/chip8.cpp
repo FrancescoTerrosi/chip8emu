@@ -295,5 +295,7 @@ void Chip8::checkFlip(unsigned char oldRow, unsigned char drawRow)
 			drawFlag = true;
 			break;
 		}
+		oldRow = oldRow >> 1;
+		drawRow = drawRow >> 1;
 	}
 }
