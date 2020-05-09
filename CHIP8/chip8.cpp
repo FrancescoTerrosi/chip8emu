@@ -32,12 +32,14 @@ void Chip8::initialize()
 	delay_timer = 60;
 	sound_timer = 60;
     drawFlag = false;
+	flipFlag = false;
 	drawRow = 0;
 	oldRow = 0;
 }
 
 void Chip8::emulateCycle()
 {
+	
     if(pc > MEM_SIZE)
     {
         printf("%s\n", "Error: program counter out of memory");
@@ -255,12 +257,12 @@ void Chip8::emulateCycle()
 				drawRow = memory[I + i];
 				oldRow = gfx[V[x] + i][V[y]];
 				gfx[V[x] + i][V[y]] ^= drawRow;
-				if (drawFlag)
+				if (!flipFlag)
 				{
 					checkFlip(oldRow, drawRow);
 				}
 			}
-			drawFlag = false;
+			flipFlag = false;
 			break;
 
 		default:
@@ -292,7 +294,7 @@ void Chip8::checkFlip(unsigned char oldRow, unsigned char drawRow)
 		if ((oldRow & 1) & (drawRow & 1))
 		{
 			V[0xF] = 1;
-			drawFlag = true;
+			flipFlag = true;
 			break;
 		}
 		oldRow = oldRow >> 1;
