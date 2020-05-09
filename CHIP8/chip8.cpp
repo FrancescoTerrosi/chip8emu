@@ -32,6 +32,8 @@ void Chip8::initialize()
 	delay_timer = 60;
 	sound_timer = 60;
     drawFlag = false;
+	drawRow = 0;
+	oldRow = 0;
 }
 
 void Chip8::emulateCycle()
@@ -44,7 +46,9 @@ void Chip8::emulateCycle()
 
     // FETCH ISTRUZIONE
 	// Devo combinare memory[pc] e memory[pc+1] --> ne leggo uno, shifto di 1 byte e faccio l'or con l'altro byte
+
     instruction = memory[pc] << 8 | memory[pc + 1]; // istruzione = 2 byte = 16 bit
+
     // Stampo istruzione in esadecimale
     printf("\nHex instruction: 0x%X\n", instruction);
     // FETCH OPERANDI
@@ -243,12 +247,21 @@ void Chip8::emulateCycle()
 			pc += 2;
 			break;
 			
-			/*
+		
 		// 0xDXYN	draws sprite at coordinate (VX, VY), width = 8 px, height = N px
 		case 0xD000:
-			
+			for (int i = 0; i < n; ++i)
+			{
+				drawRow = memory[I + i];
+				oldRow = gfx[V[x] + i][V[y]];
+				gfx[V[x] + i][V[y]] ^= drawRow;
+				if (drawFlag)
+				{
+					checkFlip(oldRow, drawRow);
+				}
+			}
+			drawFlag = false;
 			break;
-			*/
 
 		default:
 			printf("Opcode Error!!\n Code: 0x%X\n", opcode);
@@ -268,5 +281,19 @@ void Chip8::emulateCycle()
 			printf("BEEP");
 		}
 		--sound_timer;
+	}
+}
+
+
+void Chip8::checkFlip(unsigned char oldRow, unsigned char drawRow)
+{
+	while (oldRow)
+	{
+		if ((oldRow & 1) & (drawRow & 1))
+		{
+			V[0xF] = 1;
+			drawFlag = true;
+			break;
+		}
 	}
 }

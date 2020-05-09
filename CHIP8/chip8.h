@@ -59,7 +59,11 @@ public:
     unsigned char delay_timer;
     unsigned char sound_timer;
     unsigned short drawFlag;
+    unsigned char drawRow;
+    unsigned char oldRow;
 
+private:
+    void checkFlip(unsigned char oldRow, unsigned char drawRow);
 };
 
 #endif //CHIP8_H
