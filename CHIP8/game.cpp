@@ -107,6 +107,11 @@ void emulationLoop()
     while (1)
     {
         printf("%s\n", "Start CPU Cycle");
+        myChip8.emulateCycle();
+        if(myChip8.drawFlag)
+        {
+            renderChip8();
+        }
 #if 0
         //emulate one cycle
         myChip8.emulateCycle();
