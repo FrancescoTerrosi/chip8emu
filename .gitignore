@@ -1,6 +1,8 @@
 *vcxproj*
 *.vs
 *Debug/*
+*CMakeFiles/*
+*out/*
 *.sln
 *build*
 *.opendb
