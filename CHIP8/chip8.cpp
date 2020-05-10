@@ -139,7 +139,7 @@ void Chip8::emulateCycle()
 			pc += 2;
 			break;
 
-		// 0x7XNN	V[X] += NN			???? CARRY FLAG IS NOT CHANGED ?????
+		// 0x7XNN	V[X] += NN
 		case 0x7000:
             printf("Instruction: set V[%hhu] += %hhu\n", x, kk);
             V[x] += kk;
@@ -226,6 +226,8 @@ void Chip8::emulateCycle()
 			}
 			break;
 
+
+		// 0x9XY0	skips instruction if V[x] != V[y]
 		case 0x9000:
 			pc += (V[x] != V[y]) ? 4 : 2;
 			break;
@@ -322,8 +324,9 @@ void Chip8::emulateCycle()
 					
 					// QUESTO CHECK NON SO SE SIA NECESSARIO, WIKIPEDIA DICE SI MA DA ALTRE PARTI NON LO VEDO DHN
 
-					V[0xF] = ((int)I + (int)V[x] > 0xFFF) ? 1 : 0;
+					V[0xF] = ((int)I + (int)V[x] > MEM_SIZE) ? 1 : 0;
 					I += V[x];
+					pc += 2;
 					break;
 
 
