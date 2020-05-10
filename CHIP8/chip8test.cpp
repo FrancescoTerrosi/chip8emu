@@ -24,6 +24,7 @@
 #define SET_I(V)                     (0xA000 | V)
 #define SUM_V0_AND_JUMP(V)           (0xB000 | V)
 #define REGSET_RANDOM(R, MAXRND)     (0xC000 | R << 8 | MAXRND)
+#define SET_BCD(R)                   (0xF033 | R << 8)
 // ------------------------------------------------------------------------------------
 
 void load_instruction(Chip8* hardware, unsigned short mem_address, unsigned short instruction)
@@ -895,6 +896,8 @@ bool testJumpFromV0()
     return true;
 }
 
+
+
 void run_tests()
 {
     std::vector<bool (*)()> testcases;
@@ -938,7 +941,7 @@ void run_tests()
     printf("%s\n\n","-----------------------------------------------------------------------------");
 }
 
-int main()
+int test_main()
 {
     run_tests();
 }

@@ -360,11 +360,16 @@ void Chip8::emulateCycle()
 					pc += 2;
 					break;
 
-				/*
-				// 0xFX33	macello
+
+                // 0xFX33	set_bcd(V[x])
 				case 0x0033:
+                    memory[I+2] = (V[x] % 10);  // le unità
+                    memory[I+1] = (V[x] % 100) / 10; // le decine
+                    memory[I]   = (V[x] % 1000) / 100; // le centinaia
+
+                    pc += 2;
 					break;
-				*/
+
 
 				// 0xFX55	stores V0 - VX in memory[I + i]
 				case 0x0055:

@@ -1,11 +1,12 @@
 #include "chip8.h"
 Chip8 myChip8;
 
-int driver_main(int argc, char** argv)
+int main(int argc, char** argv)
 {
     //setupGraphics();
     //setupInput();
     myChip8.initialize();
+    myChip8.loadRom("pong.ch8");
    // myChip8.loadGame("pong");
 
     while (1)
