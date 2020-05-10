@@ -25,6 +25,7 @@
 #define SUM_V0_AND_JUMP(V)           (0xB000 | V)
 #define REGSET_RANDOM(R, MAXRND)     (0xC000 | R << 8 | MAXRND)
 #define SET_BCD(R)                   (0xF033 | R << 8)
+#define V0_SUB_VX(R)                 (0xF055 | R << 8)
 // ------------------------------------------------------------------------------------
 
 void load_instruction(Chip8* hardware, unsigned short mem_address, unsigned short instruction)
@@ -908,7 +909,7 @@ bool testSetBcd()
     load_instruction(&chip8, chip8.pc, SET_BCD(reg));
     chip8.emulateCycle();
 
-    bool fetchOk = (chip8.instruction == SET_BCD(reg)) && (chip8.opcode == (SET_BCD(reg) & 0xF000));
+    bool fetchOk = (chip8.instruction == SET_BCD(reg)) && (chip8.opcode == (SET_BCD(reg) & 0xF000) && (chip8.x == reg));
     if(!fetchOk)
     {
         printf("%s\n", "testSetBcd failed: wrong fetch");
@@ -919,6 +920,38 @@ bool testSetBcd()
     if(!executeOk)
     {
         printf("%s\n", "testSetBcd failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testStoreV0MinusVxInMemI()
+{
+    unsigned char reg = 0x02;
+    unsigned short memdest = 0x400;
+    unsigned short initpc = chip8.pc;
+
+    chip8.V[0x00] = 0x07;
+    chip8.V[0x01] = 0x08;
+    chip8.V[reg]  = 0x09;
+    chip8.I = memdest;
+
+    load_instruction(&chip8, chip8.pc, V0_SUB_VX(reg));
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == V0_SUB_VX(reg)) && (chip8.opcode == (V0_SUB_VX(reg) & 0xF000) && (chip8.x == reg));
+    if(!fetchOk)
+    {
+        printf("%s\n", "testStoreV0MinusVxInMemI failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.memory[memdest] == 0x07) && (chip8.memory[memdest + 1] == 0x08) && (chip8.memory[memdest + 2] == 0x09);
+    executeOk = executeOk && (chip8.I == memdest + reg + 1) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testStoreV0MinusVxInMemI failed: wrong execute");
         return false;
     }
 
@@ -947,6 +980,7 @@ void run_tests()
     testcases.push_back(&testSetI);
     testcases.push_back(&testJumpFromV0);
     testcases.push_back(&testSetBcd);
+    testcases.push_back(&testStoreV0MinusVxInMemI);
 
     int nTests = testcases.size();
     int passed = 0;
