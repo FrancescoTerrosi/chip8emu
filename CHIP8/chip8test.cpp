@@ -25,7 +25,8 @@
 #define SUM_V0_AND_JUMP(V)           (0xB000 | V)
 #define REGSET_RANDOM(R, MAXRND)     (0xC000 | R << 8 | MAXRND)
 #define SET_BCD(R)                   (0xF033 | R << 8)
-#define V0_SUB_VX(R)                 (0xF055 | R << 8)
+#define CPY_V0VX_TO_MEM_I(R)         (0xF055 | R << 8)
+#define CPY_MEM_I_TO_VOVX(R)         (0xF065 | R << 8)
 // ------------------------------------------------------------------------------------
 
 void load_instruction(Chip8* hardware, unsigned short mem_address, unsigned short instruction)
@@ -926,7 +927,7 @@ bool testSetBcd()
     return true;
 }
 
-bool testStoreV0MinusVxInMemI()
+bool testCpyVoVxToMemI()
 {
     unsigned char reg = 0x02;
     unsigned short memdest = 0x400;
@@ -937,13 +938,13 @@ bool testStoreV0MinusVxInMemI()
     chip8.V[reg]  = 0x09;
     chip8.I = memdest;
 
-    load_instruction(&chip8, chip8.pc, V0_SUB_VX(reg));
+    load_instruction(&chip8, chip8.pc, CPY_V0VX_TO_MEM_I(reg));
     chip8.emulateCycle();
 
-    bool fetchOk = (chip8.instruction == V0_SUB_VX(reg)) && (chip8.opcode == (V0_SUB_VX(reg) & 0xF000) && (chip8.x == reg));
+    bool fetchOk = (chip8.instruction == CPY_V0VX_TO_MEM_I(reg)) && (chip8.opcode == (CPY_V0VX_TO_MEM_I(reg) & 0xF000) && (chip8.x == reg));
     if(!fetchOk)
     {
-        printf("%s\n", "testStoreV0MinusVxInMemI failed: wrong fetch");
+        printf("%s\n", "testCpyVoVxToMemI failed: wrong fetch");
         return false;
     }
 
@@ -951,7 +952,39 @@ bool testStoreV0MinusVxInMemI()
     executeOk = executeOk && (chip8.I == memdest + reg + 1) && (chip8.pc == initpc + 0x02);
     if(!executeOk)
     {
-        printf("%s\n", "testStoreV0MinusVxInMemI failed: wrong execute");
+        printf("%s\n", "testCpyVoVxToMemI failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
+bool testCpyMemIToV0VX()
+{
+    unsigned char reg = 0x02;
+    unsigned short memdest = 0x400;
+    unsigned short initpc = chip8.pc;
+
+    chip8.I = memdest;
+    chip8.memory[memdest] = 0x03;
+    chip8.memory[memdest + 1] = 0x02;
+    chip8.memory[memdest + 2] = 0x01;
+
+    load_instruction(&chip8, chip8.pc, CPY_MEM_I_TO_VOVX(reg));
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == CPY_MEM_I_TO_VOVX(reg)) && (chip8.opcode == (CPY_MEM_I_TO_VOVX(reg) & 0xF000) && (chip8.x == reg));
+    if(!fetchOk)
+    {
+        printf("%s\n", "testCpyMemIToV0VX failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.V[0x00] == 0x03) && (chip8.V[0x01] == 0x02) && (chip8.V[reg] == 0x01);
+    executeOk = executeOk && (chip8.I == memdest + reg + 1) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testCpyMemIToV0VX failed: wrong execute");
         return false;
     }
 
@@ -980,7 +1013,8 @@ void run_tests()
     testcases.push_back(&testSetI);
     testcases.push_back(&testJumpFromV0);
     testcases.push_back(&testSetBcd);
-    testcases.push_back(&testStoreV0MinusVxInMemI);
+    testcases.push_back(&testCpyVoVxToMemI);
+    testcases.push_back(&testCpyMemIToV0VX);
 
     int nTests = testcases.size();
     int passed = 0;

@@ -387,10 +387,13 @@ void Chip8::emulateCycle()
 
 				// 0xFX65	fills V0 - VX with values in memory[I + i]
 				case 0x0065:
-					for (int i = 0; i < N_REG; ++i)
+                    printf("Instruction: copy from memory[%hu] into V[0] - V[%hhu]\n", I, x);
+                    for (int i = 0; i <= x; ++i)
 					{
 						V[i] = memory[I + i];
 					}
+                    I = (I + x + 1);
+
 					pc += 2;
 					break;
 
