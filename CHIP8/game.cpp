@@ -51,24 +51,23 @@ int keymap(unsigned char glKey) // assegno a ciascun keycode dato da opengl un v
     }
 }
 
-void keyPressCallback(unsigned char key, int x, int y) //signatura (:O) che vuole opengl
+void keyPressCallback(unsigned char k, int x, int y) //signatura (:O) che vuole opengl
 {
     static_cast<void>(x); // giusto per togliere gli warning unused variable
     static_cast<void>(y);
-
-    int keycode = keymap(key);
+    int keycode = keymap(k);
     if(keycode != -1)
     {
         myChip8.onKeyPress(keycode);
     }
 }
 
-void keyReleaseCallback(unsigned char key, int x, int y)
+void keyReleaseCallback(unsigned char k, int x, int y)
 {
     static_cast<void>(x);
     static_cast<void>(y);
 
-    int keycode = keymap(key);
+    int keycode = keymap(k);
     if(keycode != -1)
     {
         myChip8.onKeyRelease(keycode);
@@ -102,10 +101,8 @@ void emulationLoop()
     double clockPeriod_s = 1.0 / myChip8.clockFreq_hz;
     unsigned long clockPeriod_us = static_cast<unsigned long>(clockPeriod_s * 1e6);
     printf("clockPeriod_us: %ld\n", clockPeriod_us);
-
-    printf("Start emulation loop\n");
-    while (1)
-    {
+    //while (1)
+    //{
         printf("%s\n", "Start CPU Cycle");
         myChip8.emulateCycle();
         if(myChip8.drawFlag)
@@ -128,7 +125,7 @@ void emulationLoop()
         printf("%s\n", "End CPU Cycle\n");
         fflush(stdout);
         sleepMicroseconds(clockPeriod_us);
-    }
+    //}
 
 }
 
@@ -141,6 +138,7 @@ void setupOpengl(int argc, char** argv) //funzione di inizializzazione di opengl
             openGlScreen[i][j][0] = openGlScreen[i][j][1] = openGlScreen[i][j][2] = 0x00; //la finestra all'inizio è tutta nera
         }
     }
+    glClear(GL_COLOR_BUFFER_BIT);
 
     glutInit(&argc, argv); //passo a opengl eventuali argomenti da tastiera
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA); //modo standard per inizializzare un display mode che va bene quasi sempre

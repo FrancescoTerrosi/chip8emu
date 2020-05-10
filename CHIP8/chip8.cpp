@@ -427,6 +427,7 @@ void Chip8::emulateCycle()
 
 void Chip8::onKeyPress(int keycode)
 {
+    printf("Key pressed:% d\n", keycode);
     if(keycode < N_KEYS)
     {
         key[keycode] = 1;
@@ -435,6 +436,7 @@ void Chip8::onKeyPress(int keycode)
 
 void Chip8::onKeyRelease(int keycode)
 {
+    printf("Key released:% d\n", keycode);
     if(keycode < N_KEYS)
     {
         key[keycode] = 0;
