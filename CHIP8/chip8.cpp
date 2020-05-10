@@ -38,6 +38,25 @@ void Chip8::initialize()
 	oldRow = 0;
 }
 
+bool Chip8::loadRom(const char* filename)
+{
+    FILE* rom = fopen(filename, "rb");
+
+    if(rom != NULL)
+    {
+        unsigned short init_addr = 0x200;
+        unsigned short* ptr = &memory[init_addr];
+
+        fread(ptr, 1, MEM_SIZE - init_addr, rom);
+        fclose(rom);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 void Chip8::emulateCycle()
 {
 	

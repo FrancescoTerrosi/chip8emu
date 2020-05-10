@@ -19,6 +19,7 @@ public:
     Chip8();
 
 	void initialize();
+    bool loadRom(const char* filename);
     void emulateCycle();
 
     unsigned char chip8_fontset[80] =
