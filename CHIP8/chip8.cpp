@@ -45,7 +45,7 @@ bool Chip8::loadRom(const char* filename)
     if(rom != NULL)
     {
         unsigned short init_addr = 0x200;
-        unsigned short* ptr = &memory[init_addr];
+        unsigned char* ptr = &memory[init_addr];
 
         fread(ptr, 1, MEM_SIZE - init_addr, rom);
         fclose(rom);
