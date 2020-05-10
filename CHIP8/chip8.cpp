@@ -425,6 +425,22 @@ void Chip8::emulateCycle()
 }
 
 
+void Chip8::onKeyPress(int keycode)
+{
+    if(keycode < N_KEYS)
+    {
+        key[keycode] = 1;
+    }
+}
+
+void Chip8::onKeyRelease(int keycode)
+{
+    if(keycode < N_KEYS)
+    {
+        key[keycode] = 0;
+    }
+}
+
 void Chip8::checkFlip(unsigned char oldRow, unsigned char drawRow)
 {
 	while (oldRow)

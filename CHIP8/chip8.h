@@ -21,6 +21,8 @@ public:
 	void initialize();
     bool loadRom(const char* filename);
     void emulateCycle();
+    void onKeyPress(int keycode);
+    void onKeyRelease(int keycode);
 
     unsigned char chip8_fontset[80] =
     {
