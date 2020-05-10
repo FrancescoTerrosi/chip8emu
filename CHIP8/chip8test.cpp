@@ -896,6 +896,35 @@ bool testJumpFromV0()
     return true;
 }
 
+bool testSetBcd()
+{
+    unsigned char reg = 0x07;
+    unsigned short memdest = 0x500;
+    unsigned short initpc = chip8.pc;
+
+    chip8.V[reg] = 123;
+    chip8.I = memdest;
+
+    load_instruction(&chip8, chip8.pc, SET_BCD(reg));
+    chip8.emulateCycle();
+
+    bool fetchOk = (chip8.instruction == SET_BCD(reg)) && (chip8.opcode == (SET_BCD(reg) & 0xF000));
+    if(!fetchOk)
+    {
+        printf("%s\n", "testSetBcd failed: wrong fetch");
+        return false;
+    }
+
+    bool executeOk = (chip8.memory[memdest] == 1) && (chip8.memory[memdest + 1] == 2) && (chip8.memory[memdest + 2] == 3) && (chip8.pc == initpc + 0x02);
+    if(!executeOk)
+    {
+        printf("%s\n", "testSetBcd failed: wrong execute");
+        return false;
+    }
+
+    return true;
+}
+
 
 
 void run_tests()
@@ -917,6 +946,7 @@ void run_tests()
     testcases.push_back(&testRandom);
     testcases.push_back(&testSetI);
     testcases.push_back(&testJumpFromV0);
+    testcases.push_back(&testSetBcd);
 
     int nTests = testcases.size();
     int passed = 0;
@@ -941,7 +971,7 @@ void run_tests()
     printf("%s\n\n","-----------------------------------------------------------------------------");
 }
 
-int test_main()
+int main()
 {
     run_tests();
 }

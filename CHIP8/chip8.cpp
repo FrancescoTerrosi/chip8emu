@@ -363,6 +363,7 @@ void Chip8::emulateCycle()
 
                 // 0xFX33	set_bcd(V[x])
 				case 0x0033:
+                    printf("Instruction: set bcd(V[%hhu])\n", x);
                     memory[I+2] = (V[x] % 10);  // le unità
                     memory[I+1] = (V[x] % 100) / 10; // le decine
                     memory[I]   = (V[x] % 1000) / 100; // le centinaia
