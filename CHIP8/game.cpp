@@ -99,6 +99,10 @@ void reshapeWindowCallback(GLsizei w, GLsizei h)
 
 void emulationLoop()
 {
+    double clockPeriod_s = 1.0 / myChip8.clockFreq_hz;
+    unsigned long clockPeriod_us = static_cast<unsigned long>(clockPeriod_s * 1e6);
+    printf("clockPeriod_us: %ld\n", clockPeriod_us);
+
     printf("Start emulation loop\n");
     while (1)
     {
@@ -118,7 +122,7 @@ void emulationLoop()
 #endif
         printf("%s\n", "End CPU Cycle\n");
         fflush(stdout);
-        sleepMicroseconds(1000000);
+        sleepMicroseconds(clockPeriod_us);
     }
 
 }
