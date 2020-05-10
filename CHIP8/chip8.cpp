@@ -18,10 +18,11 @@ void Chip8::initialize()
     nnn = 0;
     n = 0;
 
-	memset(memory, 0, 4096);
-	memset(V, 0, 16);
-	memset(gfx, 0, 64 * 32);
-	memset(stack, 0, 16);
+	memset(memory, 0, MEM_SIZE);
+	memset(V, 0, N_REG);
+	memset(key, 0, N_KEYS);
+	memset(gfx, 0, GMEM_ROWS * GMEM_COLS);
+	memset(stack, 0, STACK_SIZE);
 
 	for (int i = 0; i < 80; ++i)
 	{
@@ -78,15 +79,15 @@ void Chip8::emulateCycle()
 		switch (kk)
 		{
 			// clear screen
-		case 0xE0:
+		case 0x00E0:
 			printf("Instruction: %s\n", "Clear Screen");
-			memset(gfx, 0, 64 * 32);
+			memset(gfx, 0, GMEM_ROWS * GMEM_COLS);
 			drawFlag = true;
 			pc += 2;
 			break;
 
 			// return from subroutine
-		case 0xEE:
+		case 0x00EE:
 			printf("Instruction: %s\n", "Return from subroutine");
 			--sp;
 			pc = stack[sp];
@@ -263,13 +264,115 @@ void Chip8::emulateCycle()
 				}
 			}
 			flipFlag = false;
+			drawFlag = true;
+			pc += 2;
+			break;
+
+		// Handling 0xE cases, skips instruction if key is / is not pressed
+		case 0xE000:
+			switch (kk)
+			{
+				// 0xEX9E	skips instruction if key in VX is pressed
+				case 0x009E:
+					pc += (V[x] == 1) ? 4 : 2;
+					break;
+				
+				// 0xEXA1	skips instruction if key in VX is pressed
+				case 0x00A1:
+					pc += (V[x] == 0) ? 4 : 2;
+					break;
+
+				default:
+					printf("Opcode Error!!\n Code: 0x%X\n", opcode);
+					fflush(stdout);
+			}
+			break;
+
+		// Handling multiple 0xF cases
+		case 0xF000:
+			switch (kk)
+			{
+				// 0xFX07	VX = get_delay
+				case 0x0007:
+					V[x] = delay_timer;
+					pc += 2;
+					break;
+
+				/*
+				// VX = wait_for_key_pressed	blocking waiting for input, store key pressed in V[X]
+				case 0x000A:
+
+					break;
+				*/
+
+				// 0xFX15	delay_timer = VX
+				case 0x0015:
+					delay_timer = V[x];
+					pc += 2;
+					break;
+
+				// 0xFX18	sound_timer = VX
+				case 0x0018:
+					sound_timer = V[x];
+					pc += 2;
+					break;
+
+				// 0xFX1E	I += VX
+				case 0x001E:
+					
+					// QUESTO CHECK NON SO SE SIA NECESSARIO, WIKIPEDIA DICE SI MA DA ALTRE PARTI NON LO VEDO DHN
+
+					V[0xF] = ((int)I + (int)V[x] > 0xFFF) ? 1 : 0;
+					I += V[x];
+					break;
+
+
+					// DA RIGUARDARE
+
+				// 0xFX29	I = sprite_address_of_char_in_VX
+				case 0x0029:
+					
+					// Spero di aver capito bene cosa chiede :D
+
+					I = chip8_fontset[(V[x] - 48) + 5 % 5];
+					pc += 2;
+					break;
+
+				/*
+				// 0xFX33	macello
+				case 0x0033:
+					break;
+				*/
+
+				// 0xFX55	stores V0 - VX in memory[I + i]
+				case 0x0055:
+					for (int i = 0; i < N_REG; ++i)
+					{
+						memory[I + i] = V[i];
+					}
+					pc += 2;
+					break;
+
+				// 0xFX65	fills V0 - VX with values in memory[I + i]
+				case 0x0065:
+					for (int i = 0; i < N_REG; ++i)
+					{
+						V[i] = memory[I + i];
+					}
+					pc += 2;
+					break;
+
+				default:
+					printf("Opcode Error!!\n Code: 0x%X\n", opcode);
+					fflush(stdout);
+			}
 			break;
 
 		default:
 			printf("Opcode Error!!\n Code: 0x%X\n", opcode);
 			fflush(stdout);
-
 	}
+
 
 	if (delay_timer > 0)
 	{

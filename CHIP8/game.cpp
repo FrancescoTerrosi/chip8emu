@@ -17,6 +17,7 @@ int driver_main(int argc, char** argv)
         if (myChip8.drawFlag)
         {
             //drawGraphics();
+            //myChip8.drawFlag = false;
         }
         // store keys press state (press-release)
         //myChip8.setKeys();

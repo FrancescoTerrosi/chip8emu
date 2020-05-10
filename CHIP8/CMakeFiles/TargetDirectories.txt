@@ -1,0 +1,3 @@
+C:/Users/The_A/git/chip8emu/CHIP8/CMakeFiles/chip8.dir
+C:/Users/The_A/git/chip8emu/CHIP8/CMakeFiles/ALL_BUILD.dir
+C:/Users/The_A/git/chip8emu/CHIP8/CMakeFiles/ZERO_CHECK.dir
