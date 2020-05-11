@@ -72,6 +72,7 @@ public:
 private:
     bool flipFlag;
     void checkFlip(unsigned char oldRow, unsigned char drawRow);
+    void draw_sprite(unsigned char x, unsigned char y, unsigned char n);
 };
 
 #endif //CHIP8_H

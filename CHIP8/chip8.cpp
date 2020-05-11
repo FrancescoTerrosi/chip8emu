@@ -57,12 +57,37 @@ bool Chip8::loadRom(const char* filename)
     }
 }
 
+void Chip8::draw_sprite(unsigned char x, unsigned char y, unsigned char n)
+{
+    V[0xF] = 0x00; // setto a 0 il collision flag
+
+    for (int i = 0; i < n; i++)
+    {
+        unsigned char act_byte = memory[I + i]; //leggo un byte dalla memoria
+        for (int j = 0; j < 8; j++) //ciclo su ciascun bit
+        {
+            unsigned char act_bit = (act_byte >> j) & 0x01; //il bit attuale mi sarà dato dal bit meno significativo del byte attuale shiftato a destra di j posizioni
+
+            unsigned int row_index = (y + i) % GMEM_ROWS;
+            unsigned int col_index = (x + (7 - j)) % GMEM_COLS;
+
+            unsigned char act_pixel = gfx[row_index][col_index]; //il pixel attuale che devo confrontare con act_bit
+            if(act_pixel == 1) //il collision flag va messo a 1 quando trovo un pixel da disegnare che è già a 1 (http://www.multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/)
+            {
+                V[0xF] = 0x01;
+            }
+            gfx[row_index][col_index] = act_pixel ^ act_bit; //aggiorno il pixel attuale
+        }
+    }
+}
+
 void Chip8::emulateCycle()
 {
 	
     if(pc > MEM_SIZE)
     {
         printf("%s\n", "Error: program counter out of memory");
+        exit(0);
         return;
     }
 
@@ -72,7 +97,8 @@ void Chip8::emulateCycle()
     instruction = memory[pc] << 8 | memory[pc + 1]; // istruzione = 2 byte = 16 bit
 
     // Stampo istruzione in esadecimale
-    printf("\nHex instruction: 0x%X\n", instruction);
+    printf("\nProgram counter before instruction fetch: %hu\n", pc);
+    printf("Hex instruction: 0x%X\n", instruction);
     // FETCH OPERANDI
     opcode = (instruction & 0xF000);        //opcode = 4 bit più significativi dell'istruzione
     x = ((instruction >> 8) & 0x000F);      //operando x = i 4 bit meno significativi del byte più significativo
@@ -274,17 +300,8 @@ void Chip8::emulateCycle()
 		
 		// 0xDXYN	draws sprite at coordinate (VX, VY), width = 8 px, height = N px
 		case 0xD000:
-			for (int i = 0; i < n; ++i)
-			{
-				drawRow = memory[I + i];
-				oldRow = gfx[V[x] + i][V[y]];
-				gfx[V[x] + i][V[y]] ^= drawRow;
-				if (!flipFlag)
-				{
-					checkFlip(oldRow, drawRow);
-				}
-			}
-			flipFlag = false;
+            printf("Instruction: draw sprite at (V[%hhu], V[%hhu]), height = %hhu\n", x, y, n);
+            draw_sprite(V[x], V[y], n);
 			drawFlag = true;
 			pc += 2;
 			break;
@@ -295,11 +312,13 @@ void Chip8::emulateCycle()
 			{
 				// 0xEX9E	skips instruction if key in VX is pressed
 				case 0x009E:
+                    printf("Instruction: skip next if V[%hhu] is pressed\n",V[x]);
 					pc += (V[x] == 1) ? 4 : 2;
 					break;
 				
-				// 0xEXA1	skips instruction if key in VX is pressed
+                // 0xEXA1	skips instruction if key in VX is NOT pressed
 				case 0x00A1:
+                    printf("Instruction: skip next if V[%hhu] is NOT pressed\n",V[x]);
 					pc += (V[x] == 0) ? 4 : 2;
 					break;
 
@@ -408,6 +427,7 @@ void Chip8::emulateCycle()
 			fflush(stdout);
 	}
 
+    printf("Program counter after instruction execute: %hu\n\n", pc);
 
 	if (delay_timer > 0)
 	{
