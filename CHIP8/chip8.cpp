@@ -71,12 +71,15 @@ void Chip8::draw_sprite(unsigned char x, unsigned char y, unsigned char n)
             unsigned int row_index = (y + i) % GMEM_ROWS;
             unsigned int col_index = (x + (7 - j)) % GMEM_COLS;
 
-            unsigned char act_pixel = gfx[row_index][col_index]; //il pixel attuale che devo confrontare con act_bit
-            if(act_pixel == 1) //il collision flag va messo a 1 quando trovo un pixel da disegnare che è già a 1 (http://www.multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/)
+            if(act_bit == 1)
             {
-                V[0xF] = 0x01;
+                unsigned char act_pixel = gfx[row_index][col_index]; //il pixel attuale che devo confrontare con act_bit
+                if(act_pixel == 1) //il collision flag va messo a 1 quando trovo un pixel da disegnare che è già a 1 (http://www.multigesture.net/articles/how-to-write-an-emulator-chip-8-interpreter/)
+                {
+                    V[0xF] = 0x01;
+                }
+                gfx[row_index][col_index] = act_pixel ^ act_bit; //aggiorno il pixel attuale
             }
-            gfx[row_index][col_index] = act_pixel ^ act_bit; //aggiorno il pixel attuale
         }
     }
 }
