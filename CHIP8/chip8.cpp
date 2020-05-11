@@ -1,5 +1,11 @@
 #include "chip8.h"
-
+#include "keymap.h"
+#define DEBUG 0
+#if DEBUG
+#define print(...) printf(__VA_ARGS__);
+#else
+#define print(...)
+#endif
 Chip8::Chip8()
 {
 
@@ -57,7 +63,7 @@ bool Chip8::loadRom(const char* filename)
     }
 }
 
-void Chip8::draw_sprite(unsigned char x, unsigned char y, unsigned char n)
+void Chip8::drawSprite(unsigned char x, unsigned char y, unsigned char n)
 {
     V[0xF] = 0x00; // setto a 0 il collision flag
 
@@ -86,10 +92,11 @@ void Chip8::draw_sprite(unsigned char x, unsigned char y, unsigned char n)
 
 void Chip8::emulateCycle()
 {
-	
+    static int loop = 0;
+    loop += 1;
     if(pc > MEM_SIZE)
     {
-        printf("%s\n", "Error: program counter out of memory");
+        print("%s\n", "Error: program counter out of memory");
         exit(0);
         return;
     }
@@ -100,8 +107,8 @@ void Chip8::emulateCycle()
     instruction = memory[pc] << 8 | memory[pc + 1]; // istruzione = 2 byte = 16 bit
 
     // Stampo istruzione in esadecimale
-    printf("\nProgram counter before instruction fetch: %hu\n", pc);
-    printf("Hex instruction: 0x%X\n", instruction);
+    print("\nLoop: %d\nProgram counter before instruction fetch: %hu\n", loop, pc);
+    print("Hex instruction: 0x%X\n", instruction);
     // FETCH OPERANDI
     opcode = (instruction & 0xF000);        //opcode = 4 bit più significativi dell'istruzione
     x = ((instruction >> 8) & 0x000F);      //operando x = i 4 bit meno significativi del byte più significativo
@@ -111,12 +118,12 @@ void Chip8::emulateCycle()
     nnn =  (instruction & 0x0FFF);          //operando nnn = 12 bit meno significativi dell'istruzione (1 byte e mezzo :O)
 
     //Stampo operandi fetchati
-    printf("Opcode: 0x%X = %hu\n", opcode, opcode);
-    printf("x = 0x%X = %hhu\n", x, x);
-    printf("y = 0x%X = %hhu\n", y, y);
-    printf("n = 0x%X = %hhu\n", n, n);
-    printf("kk = 0x%X = %hu\n", kk, kk);
-    printf("nnn = 0x%X = %hu\n", nnn, nnn);
+    print("Opcode: 0x%X = %hu\n", opcode, opcode);
+    print("x = 0x%X = %hhu\n", x, x);
+    print("y = 0x%X = %hhu\n", y, y);
+    print("n = 0x%X = %hhu\n", n, n);
+    print("kk = 0x%X = %hu\n", kk, kk);
+    print("nnn = 0x%X = %hu\n", nnn, nnn);
 
 	switch (opcode)
 	{
@@ -128,7 +135,7 @@ void Chip8::emulateCycle()
 		{
 			// clear screen
 		case 0x00E0:
-			printf("Instruction: %s\n", "Clear Screen");
+            print("Instruction: %s\n", "Clear Screen");
 			memset(gfx, 0, GMEM_ROWS * GMEM_COLS);
 			drawFlag = true;
 			pc += 2;
@@ -136,27 +143,27 @@ void Chip8::emulateCycle()
 
 			// return from subroutine
 		case 0x00EE:
-			printf("Instruction: %s\n", "Return from subroutine");
+            print("Instruction: %s\n", "Return from subroutine");
 			--sp;
 			pc = stack[sp];
-			printf("PC = stack[%hu] = %hu\n", sp, pc);
+            print("PC = stack[%hu] = %hu\n", sp, pc);
 			break;
 
 		default:
-			printf("Unknown instruction 0x%X\n", instruction);
+            print("Unknown instruction 0x%X\n", instruction);
 			fflush(stdout);
 		}
 		break;
 
 		// 0x1NNN	goto NNN
 	case 0x1000:
-		printf("Instruction: GOTO %hu\n", nnn);
+        print("Instruction: GOTO %hu\n", nnn);
 		pc = nnn;
 		break;
 
 		// 0x2NNN   calls subroutine at NNN
 	case 0x2000:
-		printf("Instruction: call subrotine at %hu\n", nnn);
+        print("Instruction: call subrotine at %hu\n", nnn);
 		stack[sp] = pc + 0x02;
 		++sp;
 		pc = nnn;
@@ -164,32 +171,32 @@ void Chip8::emulateCycle()
 
 		// 0x3XNN	if V[X] == NN, skip next instruction
 	case 0x3000:
-		printf("Instruction: skip next instruction if V[%hhu] == %hu\n", x, kk);
+        print("Instruction: skip next instruction if V[%hhu] == %hu\n", x, kk);
 		pc += (V[x] == kk) ? 4 : 2;
 		break;
 
 		// 0x4XNN	if V[X] != NN, skip next instruction
 	case 0x4000:
-		printf("Instruction: skip next instruction if V[%hhu] != %hu\n", x, kk);
+        print("Instruction: skip next instruction if V[%hhu] != %hu\n", x, kk);
 		pc += (V[x] != kk) ? 4 : 2;
 		break;
 
 		// 0x5XY0	if V[X] == V[Y], skip next instruction
 	case 0x5000:
-		printf("Instruction: skip next instruction if V[%hhu] == V[%hhu]\n", x, y);
+        print("Instruction: skip next instruction if V[%hhu] == V[%hhu]\n", x, y);
 		pc += (V[x] == V[y]) ? 4 : 2;
 		break;
 
 		// 0x6XNN	V[X] = NN
 		case 0x6000:
-            printf("Instruction: set V[%hhu] = %hhu\n", x, kk);
+            print("Instruction: set V[%hhu] = %hhu\n", x, kk);
             V[x] = kk;
 			pc += 2;
 			break;
 
 		// 0x7XNN	V[X] += NN
 		case 0x7000:
-            printf("Instruction: set V[%hhu] += %hhu\n", x, kk);
+            print("Instruction: set V[%hhu] += %hhu\n", x, kk);
             V[x] += kk;
 			pc += 2;
 			break;
@@ -200,35 +207,35 @@ void Chip8::emulateCycle()
 			{
 				// 0x8XY0	V[X] = V[Y]
 				case 0x0000:
-                    printf("Instruction: set V[%hhu] = V[%hhu]\n", x, y);
+                    print("Instruction: set V[%hhu] = V[%hhu]\n", x, y);
                     V[x] = V[y];
 					pc += 2;
 					break;
 				
 				// 0x8XY1	V[X] = V[X] | V[Y]
 				case 0x0001:
-                    printf("Instruction: set V[%hhu] |= V[%hhu]\n", x, y);
+                    print("Instruction: set V[%hhu] |= V[%hhu]\n", x, y);
                     V[x] = V[x] | V[y];
 					pc += 2;
 					break;
 					
 				// 0x8XY2	V[X] = V[X] & V[Y]
 				case 0x0002:
-                    printf("Instruction: set V[%hhu] &= V[%hhu]\n", x, y);
+                    print("Instruction: set V[%hhu] &= V[%hhu]\n", x, y);
                     V[x] = V[x] & V[y];
 					pc += 2;
 					break;
 
 				// 0x8XY3	V[X] = V[X] ^ V[Y]
 				case 0x0003:
-                    printf("Instruction: set V[%hhu] ^= V[%hhu]\n", x, y);
+                    print("Instruction: set V[%hhu] ^= V[%hhu]\n", x, y);
                     V[x] = V[x] ^ V[y];
 					pc += 2;
 					break;
 
 				// 0x8XY4	V[X] = V[X] + V[Y]		V[F] = 1 if carry, else 0
 				case 0x0004:
-                    printf("Instruction: set V[%hhu] += V[%hhu]\n", x, y);
+                    print("Instruction: set V[%hhu] += V[%hhu]\n", x, y);
                     V[0xF] = ((int)V[x] + (int)V[y] > 255) ? 1 : 0; //casto V[x] e V[y] a interi e guardo se la somma è maggiore di 255 quindi overflow
                     V[x] = V[x] + V[y];
 					pc += 2;
@@ -236,7 +243,7 @@ void Chip8::emulateCycle()
 					
 				// 0x8XY5	V[X] = V[X] - V[Y]		V[F] = 0 if borrow, else 1
 				case 0x0005:
-                    printf("Instruction: set V[%hhu] -= V[%hhu]\n", x, y);
+                    print("Instruction: set V[%hhu] -= V[%hhu]\n", x, y);
                     V[0xF] = (V[x] > V[y]) ? 0 : 1;
                     V[x] = V[x] - V[y];
 					pc += 2;
@@ -244,7 +251,7 @@ void Chip8::emulateCycle()
 
 				// 0x8XY6	V[F] = bit meno significativo di V[X] and V[X] >> 1
 				case 0x0006:
-                    printf("Instruction: shift right V[%hhu]\n", x);
+                    print("Instruction: shift right V[%hhu]\n", x);
                     V[0xF] = V[x] & 0x0001;
                     V[x] = V[x] >> 1;
 					pc += 2;
@@ -253,7 +260,7 @@ void Chip8::emulateCycle()
 
 				// 0x8XY7	V[X] = V[Y] - V[X]		V[F] = 0 if borrow, else 1
 				case 0x0007:
-                    printf("Instruction: set V[%hhu] = V[%hhu] - V[%hhu]\n", x, y, x);
+                    print("Instruction: set V[%hhu] = V[%hhu] - V[%hhu]\n", x, y, x);
                     V[0xF] = (V[y] > V[x]) ? 0 : 1;
                     V[x] = V[y] - V[x];
                     pc += 2;
@@ -261,7 +268,7 @@ void Chip8::emulateCycle()
 
 				// 0x8XYE	V[F] = bit meno significativo di V[X] and V[X] << 1
 				case 0x000E:
-                    printf("Instruction: shift left V[%hhu]\n", x);
+                    print("Instruction: shift left V[%hhu]\n", x);
                     V[0xF] = V[x] & 0x0001;
                     V[x] = V[x] << 1;
 					pc += 2;
@@ -269,7 +276,7 @@ void Chip8::emulateCycle()
 
 
 				default:
-					printf("Unknown opcode 0x%X\n", opcode);
+                    print("Unknown opcode 0x%X\n", opcode);
 					fflush(stdout);
 			}
 			break;
@@ -282,20 +289,20 @@ void Chip8::emulateCycle()
 
 		// 0xANNN -->  set I to address NNN
 		case 0xA000:
-            printf("Instruction: set I = %hu\n", nnn);
+            print("Instruction: set I = %hu\n", nnn);
             I = nnn;
 			pc += 2;
 			break;
 		
 		// 0xBNNN -->  PC = V0 + NNN     jump to address V0+NNN
 		case 0xB000:
-            printf("Instruction: set PC = V[0] + %hu\n", nnn);
+            print("Instruction: set PC = V[0] + %hu\n", nnn);
             pc = V[0] + nnn;
 			break;
 
 		// 0xCXNN -->  V[X] = rand() % NN         0 <= rand <= 255
 		case 0xC000:
-            printf("Instruction: set V[%hhu] = rand() %% %hhu\n", x, kk);
+            print("Instruction: set V[%hhu] = rand() %% %hhu\n", x, kk);
             V[x] = (unsigned char)((rand() % 256)) % kk;
 			pc += 2;
 			break;
@@ -303,8 +310,8 @@ void Chip8::emulateCycle()
 		
 		// 0xDXYN	draws sprite at coordinate (VX, VY), width = 8 px, height = N px
 		case 0xD000:
-            printf("Instruction: draw sprite at (V[%hhu], V[%hhu]), height = %hhu\n", x, y, n);
-            draw_sprite(V[x], V[y], n);
+            print("Instruction: draw sprite at (V[%hhu], V[%hhu]), height = %hhu\n", x, y, n);
+            drawSprite(V[x], V[y], n);
 			drawFlag = true;
 			pc += 2;
 			break;
@@ -315,18 +322,18 @@ void Chip8::emulateCycle()
 			{
 				// 0xEX9E	skips instruction if key in VX is pressed
 				case 0x009E:
-                    printf("Instruction: skip next if V[%hhu] is pressed\n",V[x]);
-					pc += (V[x] == 1) ? 4 : 2;
+                    print("Instruction: skip next if V[%hhu] is pressed\n", V[x]);
+                    pc += (key[V[x]] == 1) ? 4 : 2;
 					break;
 				
                 // 0xEXA1	skips instruction if key in VX is NOT pressed
 				case 0x00A1:
-                    printf("Instruction: skip next if V[%hhu] is NOT pressed\n",V[x]);
-					pc += (V[x] == 0) ? 4 : 2;
+                    print("Instruction: skip next if V[%hhu] is NOT pressed\n",V[x]);
+                    pc += (key[V[x]] == 0) ? 4 : 2;
 					break;
 
 				default:
-					printf("Opcode Error!!\n Code: 0x%X\n", opcode);
+                    print("Opcode Error!!\n Code: 0x%X\n", opcode);
 					fflush(stdout);
 			}
 			break;
@@ -341,12 +348,20 @@ void Chip8::emulateCycle()
 					pc += 2;
 					break;
 
-				/*
+
 				// VX = wait_for_key_pressed	blocking waiting for input, store key pressed in V[X]
 				case 0x000A:
-
+                    print("Instruction: wait for keypress and store key in V[%hhu]\n", x);
+                    for(int i = 0; i < 16; i++)
+                    {
+                        if(key[i] == 1)
+                        {
+                            V[x] = i;
+                            pc += 2;
+                        }
+                    }
 					break;
-				*/
+
 
 				// 0xFX15	delay_timer = VX
 				case 0x0015:
@@ -378,14 +393,14 @@ void Chip8::emulateCycle()
 					
 					// Spero di aver capito bene cosa chiede :D
 
-					I = chip8_fontset[(V[x] - 48) + 5 % 5];
+                    I = 5 * V[x];
 					pc += 2;
 					break;
 
 
                 // 0xFX33	set_bcd(V[x])
 				case 0x0033:
-                    printf("Instruction: set bcd(V[%hhu])\n", x);
+                    print("Instruction: set bcd(V[%hhu])\n", x);
                     memory[I+2] = (V[x] % 10);  // le unità
                     memory[I+1] = (V[x] % 100) / 10; // le decine
                     memory[I]   = (V[x] % 1000) / 100; // le centinaia
@@ -396,7 +411,7 @@ void Chip8::emulateCycle()
 
 				// 0xFX55	stores V0 - VX in memory[I + i]
 				case 0x0055:
-                    printf("Instruction: copy from V[0] to V[%hhu] into memory[%hu]\n", x, I);
+                    print("Instruction: copy from V[0] to V[%hhu] into memory[%hu]\n", x, I);
                     for (int i = 0; i <= x; i++)
                     {
                         memory[I + i] = V[i];
@@ -409,7 +424,7 @@ void Chip8::emulateCycle()
 
 				// 0xFX65	fills V0 - VX with values in memory[I + i]
 				case 0x0065:
-                    printf("Instruction: copy from memory[%hu] into V[0] - V[%hhu]\n", I, x);
+                    print("Instruction: copy from memory[%hu] into V[0] - V[%hhu]\n", I, x);
                     for (int i = 0; i <= x; ++i)
 					{
 						V[i] = memory[I + i];
@@ -420,37 +435,41 @@ void Chip8::emulateCycle()
 					break;
 
 				default:
-					printf("Opcode Error!!\n Code: 0x%X\n", opcode);
+                    print("Opcode Error!!\n Code: 0x%X\n", opcode);
 					fflush(stdout);
 			}
 			break;
 
 		default:
-			printf("Opcode Error!!\n Code: 0x%X\n", opcode);
+            print("Opcode Error!!\n Code: 0x%X\n", opcode);
 			fflush(stdout);
 	}
 
-    printf("Program counter after instruction execute: %hu\n\n", pc);
+    print("Program counter after instruction execute: %hu\n\n", pc);
 
-	if (delay_timer > 0)
-	{
-		--delay_timer;
-	}
+}
 
-	if (sound_timer > 0)
-	{
-		if (sound_timer == 1)
-		{
-			printf("BEEP");
-		}
-		--sound_timer;
-	}
+void Chip8::onTickElapsed()
+{
+    if (delay_timer > 0)
+    {
+        --delay_timer;
+    }
+
+    if (sound_timer > 0)
+    {
+        if (sound_timer == 0)
+        {
+            print("BEEP");
+        }
+        --sound_timer;
+    }
 }
 
 
 void Chip8::onKeyPress(int keycode)
 {
-    printf("Key pressed:% d\n", keycode);
+    print("Key pressed:% d\n", keycode);
     if(keycode < N_KEYS)
     {
         key[keycode] = 1;
@@ -459,7 +478,7 @@ void Chip8::onKeyPress(int keycode)
 
 void Chip8::onKeyRelease(int keycode)
 {
-    printf("Key released:% d\n", keycode);
+    print("Key released:% d\n", keycode);
     if(keycode < N_KEYS)
     {
         key[keycode] = 0;

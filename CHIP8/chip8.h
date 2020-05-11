@@ -21,10 +21,11 @@ public:
 	void initialize();
     bool loadRom(const char* filename);
     void emulateCycle();
+    void onTickElapsed();
     void onKeyPress(int keycode);
     void onKeyRelease(int keycode);
 
-    const unsigned int clockFreq_hz = 60;
+    const unsigned int clockFreq_hz = 20000;
 
     unsigned char chip8_fontset[80] =
     {
@@ -72,7 +73,7 @@ public:
 private:
     bool flipFlag;
     void checkFlip(unsigned char oldRow, unsigned char drawRow);
-    void draw_sprite(unsigned char x, unsigned char y, unsigned char n);
+    void drawSprite(unsigned char x, unsigned char y, unsigned char n);
 };
 
 #endif //CHIP8_H

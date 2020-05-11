@@ -1,12 +1,13 @@
 #include "chip8.h"
 #include "chip8test.h"
+#include "keymap.h"
 #include <GL/gl.h>
 #include <GL/glut.h>
 
 /*
  * Quì definisco le costanti per la finestra opengl
  */
-const int PIXEL_SIZE = 10; //ciascun pixel di gfx sarà ripetuto 10 volte in basso e 10 volte a destra
+const int PIXEL_SIZE = 5; //ciascun pixel di gfx sarà ripetuto 10 volte in basso e 10 volte a destra
 const int SCREEN_ROWS = GMEM_ROWS * PIXEL_SIZE;
 const int SCREEN_COLS = GMEM_COLS * PIXEL_SIZE;
 
@@ -32,32 +33,7 @@ Chip8 myChip8;
 unsigned char openGlScreen[GMEM_ROWS][GMEM_COLS][3];
 unsigned char screenToRenderize[SCREEN_ROWS][SCREEN_COLS][3]; //espansione di openGlScreen
 
-int keymap(unsigned char glKey) // assegno a ciascun keycode dato da opengl un valore da flippare nel vettore keys di chip8
-{
-    /*
-     Ovviamente sta roba è arbitraria
-    */
-    switch(glKey)
-    {
-        case 'q': return 0;
-        case 'w': return 1;
-        case 'e': return 2;
-        case 'r': return 3;
-        case 't': return 4;
-        case 'y': return 5;
-        case 'a': return 6;
-        case 's': return 7;
-        case 'd': return 8;
-        case 'f': return 9;
-        case 'g': return 10;
-        case 'z': return 11;
-        case 'x': return 12;
-        case 'c': return 13;
-        case 'v': return 14;
-        case 'b': return 15;
-        default: return -1;
-    }
-}
+std::chrono::microseconds t0;
 
 void keyPressCallback(unsigned char k, int x, int y) //signatura (:O) che vuole opengl
 {
@@ -129,32 +105,20 @@ void emulationLoop()
 {
     double clockPeriod_s = 1.0 / myChip8.clockFreq_hz;
     unsigned long clockPeriod_us = static_cast<unsigned long>(clockPeriod_s * 1e6);
-    printf("clockPeriod_us: %ld\n", clockPeriod_us);
-    //while (1)
-    //{
-        printf("%s\n", "Start CPU Cycle");
-        myChip8.emulateCycle();
-        if(myChip8.drawFlag)
-        {
-            renderChip8();
-        }
-#if 0
-        //emulate one cycle
-        myChip8.emulateCycle();
-        // if draw flag, update screen
-        if (myChip8.drawFlag)
-        {
-            //drawGraphics();
-            //myChip8.drawFlag = false;
-        }
-        // store keys press state (press-release)
-        //myChip8.setKeys();
-        //getchar();
-#endif
-        printf("%s\n", "End CPU Cycle\n");
-        fflush(stdout);
-        sleepMicroseconds(clockPeriod_us);
-    //}
+    std::chrono::microseconds t = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
+
+    myChip8.emulateCycle();
+    if(myChip8.drawFlag)
+    {
+        renderChip8();
+        myChip8.drawFlag = false;
+    }
+
+    if((t.count() - t0.count()) >= clockPeriod_us)
+    {
+        myChip8.onTickElapsed();
+        t0 = t;
+    }
 
 }
 
@@ -185,8 +149,9 @@ int main(int argc, char** argv)
     setupOpengl(argc, argv);
     //setupInput();
     myChip8.initialize();
-    myChip8.loadRom("./games/Tank.ch8");
+    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./programs/Minimal game [Revival Studios, 2007].ch8");
 
+    t0 = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
     glutMainLoop(); //lancio l'emulatore attraverso l'esecuzione della mainloop di opengl
 
     return 0;
