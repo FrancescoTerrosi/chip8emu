@@ -7,7 +7,7 @@
 /*
  * Quì definisco le costanti per la finestra opengl
  */
-const int PIXEL_SIZE = 5; //ciascun pixel di gfx sarà ripetuto 10 volte in basso e 10 volte a destra
+const int PIXEL_SIZE = 10; //ciascun pixel di gfx sarà ripetuto 10 volte in basso e 10 volte a destra
 const int SCREEN_ROWS = GMEM_ROWS * PIXEL_SIZE;
 const int SCREEN_COLS = GMEM_COLS * PIXEL_SIZE;
 
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
     setupOpengl(argc, argv);
     //setupInput();
     myChip8.initialize();
-    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./programs/Minimal game [Revival Studios, 2007].ch8");
+    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./programs/Keypad Test [Hap, 2006].ch8");
 
     t0 = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
     glutMainLoop(); //lancio l'emulatore attraverso l'esecuzione della mainloop di opengl
