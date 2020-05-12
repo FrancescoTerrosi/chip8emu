@@ -71,8 +71,6 @@ public:
     unsigned char oldRow;
 
 private:
-    bool flipFlag;
-    void checkFlip(unsigned char oldRow, unsigned char drawRow);
     void drawSprite(unsigned char x, unsigned char y, unsigned char n);
 };
 

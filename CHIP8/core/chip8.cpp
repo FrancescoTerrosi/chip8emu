@@ -39,7 +39,6 @@ void Chip8::initialize()
 	delay_timer = 60;
 	sound_timer = 60;
     drawFlag = false;
-	flipFlag = false;
 	drawRow = 0;
 	oldRow = 0;
 }
@@ -483,19 +482,4 @@ void Chip8::onKeyRelease(int keycode)
     {
         key[keycode] = 0;
     }
-}
-
-void Chip8::checkFlip(unsigned char oldRow, unsigned char drawRow)
-{
-	while (oldRow)
-	{
-		if ((oldRow & 1) & (drawRow & 1))
-		{
-			V[0xF] = 1;
-			flipFlag = true;
-			break;
-		}
-		oldRow = oldRow >> 1;
-		drawRow = drawRow >> 1;
-	}
 }

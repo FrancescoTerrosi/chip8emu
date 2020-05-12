@@ -1001,10 +1001,6 @@ void run_tests()
         {
             passed += 1;
         }
-        else
-        {
-            exit(0);
-        }
     }
 
     float failureRate = (float)(nTests - passed) / (float) nTests;
