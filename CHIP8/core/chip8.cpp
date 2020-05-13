@@ -87,6 +87,18 @@ void Chip8::drawSprite(unsigned char x, unsigned char y, unsigned char n)
             }
         }
     }
+
+#if DEBUG
+    for(int i = 0; i < GMEM_ROWS; i++)
+    {
+        for(int j = 0; j < GMEM_COLS; j++)
+        {
+            print("%c", gfx[i][j] == 1 ? '*':' ');
+        }
+        printf("%s", "\n");
+    }
+#endif
+
 }
 
 void Chip8::emulateCycle()
@@ -243,7 +255,7 @@ void Chip8::emulateCycle()
 				// 0x8XY5	V[X] = V[X] - V[Y]		V[F] = 0 if borrow, else 1
 				case 0x0005:
                     print("Instruction: set V[%hhu] -= V[%hhu]\n", x, y);
-                    V[0xF] = (V[x] > V[y]) ? 0 : 1;
+                    V[0xF] = (V[x] > V[y]) ? 1 : 0;
                     V[x] = V[x] - V[y];
 					pc += 2;
 					break;
@@ -260,16 +272,16 @@ void Chip8::emulateCycle()
 				// 0x8XY7	V[X] = V[Y] - V[X]		V[F] = 0 if borrow, else 1
 				case 0x0007:
                     print("Instruction: set V[%hhu] = V[%hhu] - V[%hhu]\n", x, y, x);
-                    V[0xF] = (V[y] > V[x]) ? 0 : 1;
+                    V[0xF] = (V[y] > V[x]) ? 1 : 0;
                     V[x] = V[y] - V[x];
                     pc += 2;
                     break;
 
-				// 0x8XYE	V[F] = bit meno significativo di V[X] and V[X] << 1
+                // 0x8XYE	V[F] = bit più significativo di V[X] and V[X] << 1
 				case 0x000E:
                     print("Instruction: shift left V[%hhu]\n", x);
-                    V[0xF] = V[x] & 0x0001;
-                    V[x] = V[x] << 1;
+                    V[0xF] = (V[x] >> 7) & 0x1;
+                    V[x] = (V[x] << 1);
 					pc += 2;
 					break;
 
@@ -415,7 +427,7 @@ void Chip8::emulateCycle()
                     {
                         memory[I + i] = V[i];
                     }
-                    I = (I + x + 1);
+                    I += (I + x + 1);
 
                     pc += 2;
                     break;

@@ -99,6 +99,9 @@ void renderChip8() //funzione che renderizza nella finestra opengl il contenuto 
 void reshapeWindowCallback(GLsizei w, GLsizei h)
 {
     //per ora è vuota poi ci si pensa, viene chiamata quando uno allarga o restringe la finestra
+    memset((void*)screenToRenderize, 0x00, SCREEN_COLS * SCREEN_ROWS * 3);
+    glDrawPixels(SCREEN_COLS, SCREEN_ROWS, GL_RGB, GL_UNSIGNED_BYTE, (void *)screenToRenderize);
+    glutSwapBuffers();
 }
 
 void emulationLoop()
@@ -149,7 +152,7 @@ int main(int argc, char** argv)
     setupOpengl(argc, argv);
     //setupInput();
     myChip8.initialize();
-    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./games/Pong (alt).ch8");
+    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./games/Space Invaders [David Winter].ch8");
 
     t0 = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
     glutMainLoop(); //lancio l'emulatore attraverso l'esecuzione della mainloop di opengl
