@@ -423,11 +423,11 @@ void Chip8::emulateCycle()
 				// 0xFX55	stores V0 - VX in memory[I + i]
 				case 0x0055:
                     print("Instruction: copy from V[0] to V[%hhu] into memory[%hu]\n", x, I);
-                    for (int i = 0; i <= x; i++)
+                    for (int i = 0; i <= x; ++i)
                     {
                         memory[I + i] = V[i];
                     }
-                    I += (I + x + 1);
+                    I = (I + x + 1);
 
                     pc += 2;
                     break;

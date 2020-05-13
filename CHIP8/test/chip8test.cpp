@@ -600,7 +600,7 @@ bool testMinusWhenNoCarry(unsigned char r1, unsigned char r2, unsigned short ins
         return false;
     }
 
-    bool executeOk = (chip8.V[r1] == 0x50 - chip8.V[r2]) && (chip8.V[0xF] == 0) && (chip8.pc == initpc + 0x02);
+    bool executeOk = (chip8.V[r1] == 0x50 - chip8.V[r2]) && (chip8.V[0xF] == 1) && (chip8.pc == initpc + 0x02);
     if(!executeOk)
     {
         printf("%s\n", "testMinusWhenNoCarry failed: wrong execute");
@@ -627,7 +627,7 @@ bool testMinusWhenCarry(unsigned char r1, unsigned char r2, unsigned short instr
         return false;
     }
 
-    bool executeOk = (chip8.V[r1] == expected_diff) && (chip8.V[0xF] == 1) && (chip8.pc == initpc + 0x02);
+    bool executeOk = (chip8.V[r1] == expected_diff) && (chip8.V[0xF] == 0) && (chip8.pc == initpc + 0x02);
     if(!executeOk)
     {
         printf("%s\n", "testMinusWhenCarry failed: wrong execute");
@@ -654,7 +654,7 @@ bool testMinusChsignWhenNoCarry(unsigned char r1, unsigned char r2, unsigned sho
         return false;
     }
 
-    bool executeOk = (chip8.V[r1] == expected_diff) && (chip8.V[0xF] == 0) && (chip8.pc == initpc + 0x02);
+    bool executeOk = (chip8.V[r1] == expected_diff) && (chip8.V[0xF] == 1) && (chip8.pc == initpc + 0x02);
     if(!executeOk)
     {
         printf("%s\n", "testMinusChsignWhenNoCarry failed: wrong execute");
@@ -681,7 +681,7 @@ bool testMinusChsignWhenCarry(unsigned char r1, unsigned char r2, unsigned short
         return false;
     }
 
-    bool executeOk = (chip8.V[r1] == expected_diff) && (chip8.V[0xF] == 1) && (chip8.pc == initpc + 0x02);
+    bool executeOk = (chip8.V[r1] == expected_diff) && (chip8.V[0xF] == 0) && (chip8.pc == initpc + 0x02);
     if(!executeOk)
     {
         printf("%s\n", "testMinusChsignWhenCarry failed: wrong execute");
