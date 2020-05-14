@@ -1,3 +1,4 @@
+#include <time.h>
 #include "chip8.h"
 #include "keymap.h"
 #define DEBUG 0
@@ -36,11 +37,12 @@ void Chip8::initialize()
 	}
 
 	// inizializzo a caso per ora poi capiremo
-	delay_timer = 60;
-	sound_timer = 60;
+    delay_timer = 0;
+    sound_timer = 0;
     drawFlag = false;
 	drawRow = 0;
-	oldRow = 0;
+    oldRow = 0;
+    srand(time(NULL));
 }
 
 bool Chip8::loadRom(const char* filename)
@@ -88,12 +90,12 @@ void Chip8::drawSprite(unsigned char x, unsigned char y, unsigned char n)
         }
     }
 
-#if DEBUG
+#if 0
     for(int i = 0; i < GMEM_ROWS; i++)
     {
         for(int j = 0; j < GMEM_COLS; j++)
         {
-            print("%c", gfx[i][j] == 1 ? '*':' ');
+            printf("%c", gfx[i][j] == 1 ? '*':' ');
         }
         printf("%s", "\n");
     }

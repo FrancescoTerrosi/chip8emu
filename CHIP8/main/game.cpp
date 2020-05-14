@@ -152,7 +152,7 @@ int main(int argc, char** argv)
     setupOpengl(argc, argv);
     //setupInput();
     myChip8.initialize();
-    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./test/test.ch8");
+    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./games/Tetris [Fran Dachille, 1991].ch8");
 
     t0 = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
     glutMainLoop(); //lancio l'emulatore attraverso l'esecuzione della mainloop di opengl

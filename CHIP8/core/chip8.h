@@ -10,8 +10,8 @@ const auto MEM_SIZE = 4096;
 const auto N_REG =  16;
 const auto STACK_SIZE = 16;
 const auto N_KEYS = 16;
-const auto GMEM_ROWS = 64;
-const auto GMEM_COLS = 32;
+const auto GMEM_ROWS = 32;
+const auto GMEM_COLS = 64;
 
 class Chip8
 {
