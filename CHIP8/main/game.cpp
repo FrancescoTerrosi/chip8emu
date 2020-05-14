@@ -148,7 +148,7 @@ void setupOpengl(int argc, char** argv) //funzione di inizializzazione di opengl
 int main(int argc, char** argv)
 {
     run_tests();
-    
+    printf("diocane");
     setupOpengl(argc, argv);
     //setupInput();
     myChip8.initialize();
