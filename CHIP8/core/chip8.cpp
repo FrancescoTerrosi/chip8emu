@@ -1,7 +1,7 @@
 #include <time.h>
 #include "chip8.h"
 #include "keymap.h"
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #define print(...) printf(__VA_ARGS__);
 #else
@@ -211,7 +211,6 @@ void Chip8::emulateCycle()
 		// 0x7XNN	V[X] += NN
 		case 0x7000:
             print("Instruction: set V[%hhu] += %hhu\n", x, kk);
-            printf("OOOOH: %d\n", V[x]);
             V[x] += kk;
 			pc += 2;
 			break;
