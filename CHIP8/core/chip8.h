@@ -25,7 +25,7 @@ public:
     void onKeyPress(int keycode);
     void onKeyRelease(int keycode);
 
-    const unsigned int clockFreq_hz = 200;
+    const unsigned int clockFreq_hz = 600;
 
     unsigned char chip8_fontset[80] =
     {

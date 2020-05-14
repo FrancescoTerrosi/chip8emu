@@ -108,7 +108,6 @@ void emulationLoop()
 {
     double clockPeriod_s = 1.0 / myChip8.clockFreq_hz;
     unsigned long clockPeriod_us = static_cast<unsigned long>(clockPeriod_s * 1e6);
-    std::chrono::microseconds t = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
 
     myChip8.emulateCycle();
     if(myChip8.drawFlag)
@@ -117,12 +116,10 @@ void emulationLoop()
         myChip8.drawFlag = false;
     }
 
-    if((t.count() - t0.count()) >= clockPeriod_us)
-    {
-        myChip8.onTickElapsed();
-        t0 = t;
-    }
-
+    std::chrono::microseconds t = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
+    myChip8.onTickElapsed();
+    sleepMicroseconds(clockPeriod_us-(t.count()-t0.count()));
+    t0 = t;
 }
 
 void setupOpengl(int argc, char** argv) //funzione di inizializzazione di opengl
@@ -152,7 +149,7 @@ int main(int argc, char** argv)
     setupOpengl(argc, argv);
     //setupInput();
     myChip8.initialize();
-    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./games/Tetris [Fran Dachille, 1991].ch8");
+    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./test/tetris.ch8");
 
     t0 = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
     glutMainLoop(); //lancio l'emulatore attraverso l'esecuzione della mainloop di opengl

@@ -75,8 +75,8 @@ void Chip8::drawSprite(unsigned char x, unsigned char y, unsigned char n)
         {
             unsigned char act_bit = (act_byte >> j) & 0x01; //il bit attuale mi sarà dato dal bit meno significativo del byte attuale shiftato a destra di j posizioni
 
-            unsigned int row_index = (y + i) % GMEM_ROWS;
-            unsigned int col_index = (x + (7 - j)) % GMEM_COLS;
+            unsigned int row_index = (y + i);
+            unsigned int col_index = (x + (7 - j));
 
             if(act_bit == 1)
             {
@@ -143,62 +143,62 @@ void Chip8::emulateCycle()
 		// DECODE DEGLI OPCODE
 
 		// gestione 2 op che iniziano con 0x00
-	case 0x0000:
-		switch (kk)
-		{
-			// clear screen
-		case 0x00E0:
-            print("Instruction: %s\n", "Clear Screen");
-			memset(gfx, 0, GMEM_ROWS * GMEM_COLS);
-			drawFlag = true;
-			pc += 2;
-			break;
-
-			// return from subroutine
-		case 0x00EE:
-            print("Instruction: %s\n", "Return from subroutine");
-			--sp;
-			pc = stack[sp];
-            print("PC = stack[%hu] = %hu\n", sp, pc);
-			break;
-
-		default:
-            print("Unknown instruction 0x%X\n", instruction);
-			fflush(stdout);
-		}
-		break;
+        case 0x0000:
+            switch (kk)
+            {
+                // clear screen
+            case 0x00E0:
+                print("Instruction: %s\n", "Clear Screen");
+                memset(gfx, 0, GMEM_ROWS * GMEM_COLS);
+                drawFlag = true;
+                pc += 2;
+                break;
+    
+                // return from subroutine
+            case 0x00EE:
+                print("Instruction: %s\n", "Return from subroutine");
+                --sp;
+                pc = stack[sp];
+                print("PC = stack[%hu] = %hu\n", sp, pc);
+                break;
+    
+            default:
+                print("Unknown instruction 0x%X\n", instruction);
+                fflush(stdout);
+            }
+            break;
 
 		// 0x1NNN	goto NNN
-	case 0x1000:
-        print("Instruction: GOTO %hu\n", nnn);
-		pc = nnn;
-		break;
+        case 0x1000:
+            print("Instruction: GOTO %hu\n", nnn);
+            pc = nnn;
+            break;
 
 		// 0x2NNN   calls subroutine at NNN
-	case 0x2000:
-        print("Instruction: call subrotine at %hu\n", nnn);
-		stack[sp] = pc + 0x02;
-		++sp;
-		pc = nnn;
-		break;
+        case 0x2000:
+            print("Instruction: call subrotine at %hu\n", nnn);
+            stack[sp] = pc + 0x02;
+            ++sp;
+            pc = nnn;
+            break;
 
 		// 0x3XNN	if V[X] == NN, skip next instruction
-	case 0x3000:
-        print("Instruction: skip next instruction if V[%hhu] == %hu\n", x, kk);
-		pc += (V[x] == kk) ? 4 : 2;
-		break;
+        case 0x3000:
+            print("Instruction: skip next instruction if V[%hhu] == %hu\n", x, kk);
+            pc += (V[x] == kk) ? 4 : 2;
+            break;
 
 		// 0x4XNN	if V[X] != NN, skip next instruction
-	case 0x4000:
-        print("Instruction: skip next instruction if V[%hhu] != %hu\n", x, kk);
-		pc += (V[x] != kk) ? 4 : 2;
-		break;
+        case 0x4000:
+            print("Instruction: skip next instruction if V[%hhu] != %hu\n", x, kk);
+            pc += (V[x] != kk) ? 4 : 2;
+            break;
 
 		// 0x5XY0	if V[X] == V[Y], skip next instruction
-	case 0x5000:
-        print("Instruction: skip next instruction if V[%hhu] == V[%hhu]\n", x, y);
-		pc += (V[x] == V[y]) ? 4 : 2;
-		break;
+        case 0x5000:
+            print("Instruction: skip next instruction if V[%hhu] == V[%hhu]\n", x, y);
+            pc += (V[x] == V[y]) ? 4 : 2;
+            break;
 
 		// 0x6XNN	V[X] = NN
 		case 0x6000:
