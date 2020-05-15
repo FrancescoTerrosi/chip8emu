@@ -21,7 +21,7 @@ class Chip8
 public:
     Chip8();
 
-	void initialize();
+    void initialize();
     bool loadRom(const char* filename);
     void emulateCycle();
     void onTickElapsed();

@@ -82,8 +82,8 @@ void Chip8::drawSprite(unsigned char x, unsigned char y, unsigned char n)
         {
             unsigned char act_bit = (act_byte >> j) & 0x01; //il bit attuale mi sarà dato dal bit meno significativo del byte attuale shiftato a destra di j posizioni
 
-            unsigned int row_index = (y + i);
-            unsigned int col_index = (x + (7 - j));
+            unsigned int row_index = (y + i) % GMEM_ROWS;
+            unsigned int col_index = (x + (7 - j)) % GMEM_COLS;
 
             if(act_bit == 1)
             {
@@ -97,7 +97,7 @@ void Chip8::drawSprite(unsigned char x, unsigned char y, unsigned char n)
         }
     }
 
-#if 0
+#if DEBUG
     for(int i = 0; i < GMEM_ROWS; i++)
     {
         for(int j = 0; j < GMEM_COLS; j++)
@@ -172,6 +172,7 @@ void Chip8::emulateCycle()
             default:
                 print("Unknown instruction 0x%X\n", instruction);
                 fflush(stdout);
+                exit(1);
             }
             break;
 
@@ -298,6 +299,7 @@ void Chip8::emulateCycle()
 				default:
                     print("Unknown opcode 0x%X\n", opcode);
 					fflush(stdout);
+                    exit(1);
 			}
 			break;
 
@@ -355,6 +357,7 @@ void Chip8::emulateCycle()
 				default:
                     print("Opcode Error!!\n Code: 0x%X\n", opcode);
 					fflush(stdout);
+                    exit(1);
 			}
 			break;
 
@@ -456,6 +459,7 @@ void Chip8::emulateCycle()
 
 				default:
                     print("Opcode Error!!\n Code: 0x%X\n", opcode);
+                    exit(1);
 					fflush(stdout);
 			}
 			break;
@@ -463,7 +467,8 @@ void Chip8::emulateCycle()
 		default:
             print("Opcode Error!!\n Code: 0x%X\n", opcode);
 			fflush(stdout);
-	}
+            exit(1);
+    }
 
     print("Program counter after instruction execute: %hu\n\n", pc);
 
