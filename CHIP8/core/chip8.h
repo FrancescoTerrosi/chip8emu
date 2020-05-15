@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <thread>
+
+#include "audiodevice.h"
 
 const auto MEM_SIZE = 4096;
 const auto N_REG =  16;
@@ -69,6 +72,9 @@ public:
     unsigned short drawFlag;
     unsigned char drawRow;
     unsigned char oldRow;
+
+    AudioDevice audioDevice;
+    std::thread* audioThread;
 
 private:
     void drawSprite(unsigned char x, unsigned char y, unsigned char n);

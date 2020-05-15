@@ -145,11 +145,10 @@ void setupOpengl(int argc, char** argv) //funzione di inizializzazione di opengl
 int main(int argc, char** argv)
 {
     run_tests();
-    printf("diocane");
     setupOpengl(argc, argv);
-    //setupInput();
     myChip8.initialize();
-    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./test/tetris.ch8");
+
+    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./games/Pong (1 player).ch8");
 
     t0 = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
     glutMainLoop(); //lancio l'emulatore attraverso l'esecuzione della mainloop di opengl

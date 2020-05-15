@@ -1,4 +1,5 @@
 #include <time.h>
+#include <unistd.h>
 #include "chip8.h"
 #include "keymap.h"
 #define DEBUG 0
@@ -7,6 +8,12 @@
 #else
 #define print(...)
 #endif
+
+void beepThread(AudioDevice* device)
+{
+    device->renderFrequency(700, 500, 32600);
+}
+
 Chip8::Chip8()
 {
 
@@ -471,11 +478,11 @@ void Chip8::onTickElapsed()
 
     if (sound_timer > 0)
     {
+        --sound_timer;
         if (sound_timer == 0)
         {
-            print("BEEP");
+            audioThread = new std::thread(beepThread, &audioDevice);
         }
-        --sound_timer;
     }
 }
 
