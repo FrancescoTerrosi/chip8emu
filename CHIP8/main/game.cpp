@@ -24,13 +24,12 @@ Chip8 myChip8;
 
 /*
  * Definisco la matrice RIGHE x COLONNE x 3 che opengl deve renderizzare.
- * In realtà è una semplice copia della memoria grafica di chip8
+ * In realtà è una semplice copia della memoria grafica di chip8 (espansa di pixel_size)
  * però per ciascun valore 1/0 dei pixel, definisco i parametri R,G,B per quel pixel:
  * Se chip8.gfx[i][j] = 1 -> openGlScreen[i][j][0 = R] = 255, openGlScreen[i][j][1 = G] = 255, openGlScreen[i][j][2 = B] = 255
  * Ossia ho messo rosso 255, verde 255, blu 255 = BIANCO
  * Se li metto tutti a zero avrò il nero, taac
  */
-unsigned char openGlScreen[GMEM_ROWS][GMEM_COLS][3];
 unsigned char screenToRenderize[SCREEN_ROWS][SCREEN_COLS][3]; //espansione di openGlScreen
 
 std::chrono::microseconds t0;
@@ -60,16 +59,6 @@ void keyReleaseCallback(unsigned char k, int x, int y)
 
 void renderChip8() //funzione che renderizza nella finestra opengl il contenuto della memoria grafica di chip8
 {
-    //traduco da gfx a openGlScreen
-    for(int i = 0; i < GMEM_ROWS; i++)
-    {
-        for(int j = 0; j < GMEM_COLS; j++)
-        {
-            unsigned char col = myChip8.gfx[i][j] == 1 ? 0xFF : 0x00; //questo pixel deve essere bianco o nero
-            openGlScreen[GMEM_ROWS - 1 - i][j][0] = openGlScreen[GMEM_ROWS - 1 - i][j][1] = openGlScreen[GMEM_ROWS - 1 - i][j][2] = col;
-        }
-    }
-
     //espando openGlScreen di PIXEL_SIZE e renderizzo questo
     unsigned int act_row = 0;
     unsigned int act_col = 0;
@@ -77,7 +66,7 @@ void renderChip8() //funzione che renderizza nella finestra opengl il contenuto 
     {
         for(int j = 0; j < GMEM_COLS; j++)
         {
-            unsigned char colour = openGlScreen[i][j][0];
+            unsigned char colour = myChip8.gfx[GMEM_ROWS - 1 - i][j] == 1 ? 0xFF : 0x00;
             for(int k = 0; k < PIXEL_SIZE; k++)
             {
                 for(int l = 0; l < PIXEL_SIZE; l++)
@@ -99,9 +88,6 @@ void renderChip8() //funzione che renderizza nella finestra opengl il contenuto 
 void reshapeWindowCallback(GLsizei w, GLsizei h)
 {
     //per ora è vuota poi ci si pensa, viene chiamata quando uno allarga o restringe la finestra
-    memset((void*)screenToRenderize, 0x00, SCREEN_COLS * SCREEN_ROWS * 3);
-    glDrawPixels(SCREEN_COLS, SCREEN_ROWS, GL_RGB, GL_UNSIGNED_BYTE, (void *)screenToRenderize);
-    glutSwapBuffers();
 }
 
 void emulationLoop()
@@ -124,7 +110,6 @@ void emulationLoop()
 
 void setupOpengl(int argc, char** argv) //funzione di inizializzazione di opengl
 {
-    memset(openGlScreen, 0x00, GMEM_COLS * GMEM_ROWS);
     memset(screenToRenderize, 0x00, SCREEN_COLS * SCREEN_ROWS);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -148,7 +133,7 @@ int main(int argc, char** argv)
     setupOpengl(argc, argv);
     myChip8.initialize();
 
-    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./test/pong1.ch8");
+    myChip8.loadRom(argc > 1 ? argv[argc - 1] : "./games/Pong (alt).ch8");
 
     t0 = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch());
     glutMainLoop(); //lancio l'emulatore attraverso l'esecuzione della mainloop di opengl

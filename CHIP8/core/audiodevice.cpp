@@ -4,6 +4,16 @@
 #include <stdio.h>
 #include <math.h>
 
+AudioDevice::AudioDevice()
+{
+
+}
+
+AudioDevice::~AudioDevice()
+{
+
+}
+
 int AudioDevice::al_check_error(const char * given_label)
 {
     ALenum al_error;
@@ -17,17 +27,7 @@ int AudioDevice::al_check_error(const char * given_label)
     return 0;
 }
 
-AudioDevice::AudioDevice()
-{
-
-}
-
-AudioDevice::~AudioDevice()
-{
-
-}
-
-void AudioDevice::renderFrequency(float frequency_hz, unsigned int duration_ms, unsigned int sampleRate_hz)
+void AudioDevice::init()
 {
     const char * defname = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
 
@@ -37,6 +37,28 @@ void AudioDevice::renderFrequency(float frequency_hz, unsigned int duration_ms, 
 
     alGenBuffers(1, & internal_buffer);
     al_check_error("failed call to alGenBuffers");
+
+}
+
+void AudioDevice::close()
+{
+    ALenum errorCode = 0;
+
+    alSourceStopv(1, & streaming_source[0]);
+    alSourcei(streaming_source[0], AL_BUFFER, 0);
+
+    alDeleteSources(1, &streaming_source[0]);
+    alDeleteBuffers(16, &streaming_source[0]);
+    errorCode = alGetError();
+    alcMakeContextCurrent(NULL);
+    errorCode = alGetError();
+    alcDestroyContext(openal_output_context);
+    alcCloseDevice(openal_output_device);
+}
+
+void AudioDevice::renderFrequency(float frequency_hz, unsigned int duration_ms, unsigned int sampleRate_hz)
+{
+    init();
 
     size_t buflen = (size_t)((duration_ms/1000.0) * sampleRate_hz);
     short* samples = (short*) malloc(sizeof(short) * buflen);
@@ -62,16 +84,5 @@ void AudioDevice::renderFrequency(float frequency_hz, unsigned int duration_ms, 
         al_check_error("alGetSourcei AL_SOURCE_STATE");
     }
 
-    ALenum errorCode = 0;
-
-    alSourceStopv(1, & streaming_source[0]);
-    alSourcei(streaming_source[0], AL_BUFFER, 0);
-
-    alDeleteSources(1, &streaming_source[0]);
-    alDeleteBuffers(16, &streaming_source[0]);
-    errorCode = alGetError();
-    alcMakeContextCurrent(NULL);
-    errorCode = alGetError();
-    alcDestroyContext(openal_output_context);
-    alcCloseDevice(openal_output_device);
+    close();
 }
