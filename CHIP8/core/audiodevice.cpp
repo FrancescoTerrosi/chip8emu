@@ -64,11 +64,13 @@ void AudioDevice::renderFrequency(float frequency_hz, unsigned int duration_ms, 
     short* samples = (short*) malloc(sizeof(short) * buflen);
     for(int i = 0; i < buflen; i++)
     {
-        samples[i] = 32760 * sin( (2.f * M_PI * frequency_hz)/sampleRate_hz * i );
+        samples[i] = 32760*sin((2.f*M_PI*frequency_hz)/sampleRate_hz*i);
     }
+
     alBufferData(internal_buffer, AL_FORMAT_MONO16, samples, buflen, sampleRate_hz);
     al_check_error("populating alBufferData");
     free(samples);
+
     alGenSources(1, &streaming_source[0]);
     alSourcei(streaming_source[0], AL_BUFFER, internal_buffer);
     alSourcePlay(streaming_source[0]);

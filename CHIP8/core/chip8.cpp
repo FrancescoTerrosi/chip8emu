@@ -61,9 +61,9 @@ bool Chip8::loadRom(const char* filename)
         unsigned short init_addr = 0x200;
         unsigned char* ptr = &memory[init_addr];
 
-        fread(ptr, 1, MEM_SIZE - init_addr, rom);
+        int r = fread(ptr, 1, MEM_SIZE - init_addr, rom);
         fclose(rom);
-        return true;
+        return r > 0;
     }
     else
     {
